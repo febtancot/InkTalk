@@ -1,10 +1,32 @@
-# InkTalk
+<div align="center">
+  <img src="website/assets/icon.png" width="96" height="96" alt="InkTalk Logo">
+  <h1>InkTalk</h1>
+  <p><strong>开口即文字的 Android 语音输入法</strong></p>
+  <p>Voice-first Android IME — speak and see text appear in real time</p>
 
-纯语音 Android 输入法：按住即说、实时上屏，基于火山引擎「豆包流式语音识别大模型 2.0」，并可选接入任意 OpenAI 兼容大模型做「自由语音指令 / 总结 / 翻译 / 整理」。
+  [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+  [![Android](https://img.shields.io/badge/platform-Android%2026%2B-green.svg)](https://developer.android.com)
+  [![Version](https://img.shields.io/badge/version-0.3-orange.svg)](https://github.com/febtancot/InkTalk/releases)
 
-当前版本：0.2.0。详见 [InkTalk 0.2.0 产品发布说明](output/InkTalk-0.2.0-产品发布说明.md)和 [API 配置与获取指南](output/InkTalk-API-配置与获取指南.md)。
+  [🌐 官网 Website](https://inktalk.cc) · [📖 配置指南](https://inktalk.cc/config-guide.html) · [⬇️ 下载 APK](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.3-release.apk)
+</div>
 
-## 功能
+---
+
+InkTalk 是一款**纯语音驱动**的 Android 输入法。按住即说、实时上屏，基于火山引擎「豆包流式语音识别大模型 2.0」，并可接入任意 OpenAI 兼容大模型完成自由语音指令、总结、翻译与整理。
+
+> **没有键盘，是刻意的** —— 语音负责速度，手写负责精度，指令负责改写，每日整理负责回顾。
+
+### 为什么选择 InkTalk？
+
+- 🎤 **真正的语音优先输入法** — 不是在键盘上加一个语音按钮，而是完全为语音输入设计
+- ⚡ **200ms 低延迟实时上屏** — 双向流式识别，边说边出字
+- 🧠 **内置 AI Chat 入口** — 语音指令改稿、总结、翻译，不离开当前应用
+- ✍️ **手写精修搭档** — 语音 + 手写组合，局部修改的最佳方案
+- 📋 **每日输入整理** — AI 自动生成当日输入摘要，高效回顾
+- 🔒 **隐私安全** — 凭据只存本机，代码完全开源（MIT 协议）
+
+## 功能亮点
 
 - 🎤 **中英混合与英文优先**：设置为“实时中英混合”时，键盘显示“中英混合 / 123”，中英文共用 `bigmodel_async`；设置为“英文优先定稿”时，显示“中文 / 123 / English”，English 使用 `bigmodel_nostream + en-US`。数字口述会规范为阿拉伯数字。
 - ⚡ **低延迟**：使用官方推荐的双向流式优化版端点（bigmodel_async），200 ms 音频分包，结果变化才下发。
@@ -83,3 +105,26 @@ app/src/main/java/com/inktalk/ime/
 ├── settings/              # 设置页 + SharedPreferences 封装
 └── ui/WaveformView.kt     # 音量波形
 ```
+
+## 相关链接
+
+| 资源 | 链接 |
+|------|------|
+| 官网 | https://inktalk.cc |
+| 配置指南 | https://inktalk.cc/config-guide.html |
+| APK 下载 | [InkTalk v0.3](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.3-release.apk) |
+| 产品发布说明 | [InkTalk 0.2.0 产品发布说明](output/InkTalk-0.2.0-产品发布说明.md) |
+| API 配置指南 | [API 配置与获取指南](output/InkTalk-API-配置与获取指南.md) |
+
+## 开源协议
+
+本项目基于 [MIT License](LICENSE) 开源，欢迎自由使用、修改和分发。
+
+---
+
+<details>
+<summary><strong>Keywords / 关键词（SEO）</strong></summary>
+
+Android voice input, speech-to-text IME, voice keyboard, 语音输入法, 语音转文字, Android 输入法, 实时语音识别, AI writing assistant, voice typing, 豆包语音识别, Volcengine ASR, OpenAI compatible, 中英混合识别, speech recognition, voice commands, 手写输入法, handwriting input, AI summarization, voice-to-text Android app
+
+</details>
