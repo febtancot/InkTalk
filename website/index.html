@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InkTalk — 开口即文字的 Android 语音输入法</title>
+<meta name="description" content="InkTalk 是一款以语音为核心的 Android 输入法：按住即说、实时上屏，基于火山引擎豆包流式语音识别大模型 2.0，可选接入任意 OpenAI 兼容大模型做语音指令、总结、翻译与整理。">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<style>
+  :root {
+    --paper: #F5F2EC;
+    --paper-soft: #FAF8F3;
+    --surface: #FFFFFF;
+    --ink: #1F2A44;
+    --ink-soft: #33405C;
+    --ink-muted: #66708A;
+    --accent: #0F62E6;
+    --accent-bright: #2F7BF0;
+    --recording: #BA3F35;
+    --divider: #D9DDE6;
+    --divider-soft: #E8EAF0;
+    --chip-bg: #EAF1FE;
+    --chip-border: #C4D8FA;
+    --badge-bg: #DDE9FD;
+    --ok: #2E9E5B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- 导航 ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(247, 240, 232, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--divider-soft);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
+  nav img { width: 30px; height: 30px; border-radius: 7px; }
+  nav .brand { font-weight: 700; font-size: 17px; color: var(--ink); letter-spacing: 0.2px; }
+  nav .brand:hover { text-decoration: none; }
+  nav .links { margin-left: auto; display: flex; gap: 22px; font-size: 14px; }
+  nav .links a { color: var(--ink-soft); }
+  nav .links a:hover { color: var(--accent); text-decoration: none; }
+  @media (max-width: 640px) { nav .links a:not(:last-child) { display: none; } }
+
+  .btn {
+    display: inline-block; padding: 10px 22px; border-radius: 10px;
+    font-size: 15px; font-weight: 600; transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #F4F8FF !important; box-shadow: 0 4px 14px rgba(15, 98, 230, .30); }
+  .btn-primary:hover { box-shadow: 0 6px 18px rgba(15, 98, 230, .40); }
+  .btn-ghost { border: 1px solid var(--divider); color: var(--ink-soft) !important; background: var(--surface); }
+
+  /* ---------- Hero ---------- */
+  header.hero { padding: 76px 0 64px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  @media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; gap: 44px; } }
+  .hero .badge {
+    display: inline-block; font-size: 13px; color: var(--accent);
+    background: var(--badge-bg); border-radius: 999px; padding: 3px 12px; margin-bottom: 18px; font-weight: 600;
+  }
+  .hero h1 { font-size: 44px; line-height: 1.25; letter-spacing: 0.5px; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  @media (max-width: 640px) { .hero h1 { font-size: 33px; } }
+  .hero p.lead { margin: 20px 0 30px; font-size: 17px; color: var(--ink-muted); max-width: 30em; }
+  .hero .cta { display: flex; gap: 14px; flex-wrap: wrap; }
+
+  /* ---------- 键盘面板模拟 ---------- */
+  .kbd-demo {
+    background: var(--surface); border: 1px solid var(--divider-soft); border-radius: 20px;
+    box-shadow: 0 20px 48px rgba(48, 42, 37, .10);
+    overflow: hidden; user-select: none;
+  }
+  .kbd-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--paper-soft); padding: 10px 14px; border-bottom: 1px solid var(--divider-soft);
+    font-size: 13px; color: var(--ink-muted);
+  }
+  .kbd-toolbar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+  .kbd-modes { display: flex; gap: 8px; padding: 14px 16px 0; }
+  .kbd-modes span {
+    font-size: 13px; padding: 5px 13px; border-radius: 999px;
+    background: var(--chip-bg); color: var(--ink-soft); border: 1px solid transparent;
+  }
+  .kbd-modes span.on { background: var(--badge-bg); color: var(--accent); font-weight: 600; border-color: var(--chip-border); }
+  .kbd-stage { display: flex; flex-direction: column; align-items: center; padding: 26px 16px 20px; gap: 18px; }
+  .kbd-mic {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 22px rgba(15, 98, 230, .35); cursor: pointer;
+    transition: transform .15s ease;
+    animation: micPulse 2.6s ease-in-out infinite;
+  }
+  .kbd-mic:hover { transform: scale(1.05); }
+  .kbd-mic svg { width: 34px; height: 34px; fill: #F4F8FF; }
+  @keyframes micPulse {
+    0%, 100% { box-shadow: 0 8px 22px rgba(15, 98, 230, .35), 0 0 0 0 rgba(47, 123, 240, .30); }
+    50% { box-shadow: 0 8px 22px rgba(15, 98, 230, .35), 0 0 0 16px rgba(47, 123, 240, 0); }
+  }
+  .kbd-wave { display: flex; align-items: center; gap: 4px; height: 34px; }
+  .kbd-wave i { width: 4px; border-radius: 2px; background: var(--accent-bright); animation: wave 1.1s ease-in-out infinite; }
+  .kbd-wave i:nth-child(1) { height: 10px; animation-delay: 0s; }
+  .kbd-wave i:nth-child(2) { height: 18px; animation-delay: .12s; }
+  .kbd-wave i:nth-child(3) { height: 26px; animation-delay: .24s; }
+  .kbd-wave i:nth-child(4) { height: 32px; animation-delay: .36s; }
+  .kbd-wave i:nth-child(5) { height: 22px; animation-delay: .48s; }
+  .kbd-wave i:nth-child(6) { height: 30px; animation-delay: .60s; }
+  .kbd-wave i:nth-child(7) { height: 16px; animation-delay: .72s; }
+  .kbd-wave i:nth-child(8) { height: 24px; animation-delay: .84s; }
+  .kbd-wave i:nth-child(9) { height: 12px; animation-delay: .96s; }
+  @keyframes wave { 0%, 100% { transform: scaleY(.55); } 50% { transform: scaleY(1.15); } }
+  .kbd-hint { font-size: 14px; color: var(--ink-muted); }
+  .kbd-actions { display: flex; gap: 8px; padding: 0 16px 16px; flex-wrap: wrap; justify-content: center; }
+  .kbd-actions span {
+    font-size: 12.5px; padding: 5px 12px; border-radius: 999px;
+    background: var(--chip-bg); border: 1px solid var(--chip-border); color: var(--ink-soft);
+  }
+
+  /* ---------- 区块通用 ---------- */
+  section { padding: 72px 0; }
+  section + section { border-top: 1px solid var(--divider-soft); }
+  .sec-head { max-width: 620px; margin-bottom: 44px; }
+  .sec-head .kicker { font-size: 13px; font-weight: 700; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+  .sec-head h2 { font-size: 30px; margin: 10px 0 12px; letter-spacing: 0.3px; }
+  .sec-head p { color: var(--ink-muted); font-size: 15.5px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--divider-soft); border-radius: 16px;
+    padding: 24px 22px; transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(48, 42, 37, .09); }
+  .card .ico {
+    width: 40px; height: 40px; border-radius: 11px; background: var(--chip-bg);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+  }
+  .card .ico svg { width: 20px; height: 20px; fill: var(--accent); }
+  .card h3 { font-size: 16.5px; margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--ink-muted); }
+
+  /* ---------- 设计理念：组合流 ---------- */
+  .loop { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr 28px 1fr; gap: 10px; align-items: stretch; }
+  @media (max-width: 960px) { .loop { grid-template-columns: 1fr 1fr; } .loop .loop-arrow { display: none; } }
+  @media (max-width: 560px) { .loop { grid-template-columns: 1fr; } }
+  .loop-arrow { display: flex; align-items: center; justify-content: center; color: var(--divider); font-size: 18px; }
+  .loop-step { padding: 20px 18px; }
+  .loop-num { font-size: 22px; color: var(--accent-bright); margin-bottom: 8px; }
+  .loop-step p strong { color: var(--accent); font-weight: 600; }
+
+  /* ---------- 工作原理 ---------- */
+  .flow { display: grid; grid-template-columns: 1fr 44px 1fr; gap: 18px; align-items: stretch; }
+  @media (max-width: 720px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); } }
+  .flow .arrow { display: flex; align-items: center; justify-content: center; color: var(--divider); font-size: 22px; }
+  .flow .card code, .steps code, .limits li code, .card code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .88em; background: var(--chip-bg); border-radius: 5px; padding: 1px 6px; color: var(--accent);
+  }
+
+  /* ---------- 快速开始 ---------- */
+  .steps { counter-reset: step; display: grid; gap: 14px; max-width: 720px; }
+  .steps li {
+    list-style: none; counter-increment: step; position: relative;
+    background: var(--surface); border: 1px solid var(--divider-soft); border-radius: 14px;
+    padding: 18px 20px 18px 64px; font-size: 15px;
+  }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 20px; top: 18px;
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #F4F8FF;
+    font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .steps li strong { display: block; margin-bottom: 2px; }
+  .steps li span { color: var(--ink-muted); font-size: 14px; }
+  .build-cmd {
+    margin-top: 26px; max-width: 720px; background: var(--ink); color: #E4EAF6;
+    border-radius: 14px; padding: 18px 22px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13.5px; overflow-x: auto; white-space: pre;
+  }
+  .build-cmd .c { color: #8B96B0; }
+
+  /* ---------- 隐私 / 限制 ---------- */
+  .privacy { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  @media (max-width: 720px) { .privacy { grid-template-columns: 1fr; } }
+  .limits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 28px; padding-left: 20px; color: var(--ink-muted); font-size: 14.5px; }
+  @media (max-width: 720px) { .limits { grid-template-columns: 1fr; } }
+  .limits li { margin-bottom: 6px; }
+
+  /* ---------- 下载 / 页脚 ---------- */
+  .download { text-align: center; }
+  .download h2 { font-size: 30px; margin-bottom: 12px; }
+  .download p { color: var(--ink-muted); max-width: 34em; margin: 0 auto 28px; }
+  footer { border-top: 1px solid var(--divider-soft); padding: 34px 0 44px; color: var(--ink-muted); font-size: 13.5px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <img src="assets/icon.png" alt="InkTalk 图标">
+    <a class="brand" href="#top">InkTalk</a>
+    <div class="links">
+      <a href="#philosophy">理念</a>
+      <a href="#features">功能</a>
+      <a href="#how">原理</a>
+      <a href="#start">快速开始</a>
+      <a href="#privacy">隐私</a>
+      <a href="#download">下载</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="badge">Android 语音输入法</span>
+      <h1>按住说话，<br><em>文字实时上屏</em>。</h1>
+      <p class="lead">
+        InkTalk 是一款以语音为核心的 Android 输入法，基于火山引擎「豆包流式语音识别大模型 2.0」，
+        支持中英混合识别、自由语音指令、手写输入，并可接入任意 OpenAI 兼容大模型完成总结、翻译与整理。
+        <strong style="color:var(--ink-soft)">它没有键盘——我们取消键盘，就是希望让你纯粹地享受语音输入带来的高效。</strong>
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#download">下载 APK</a>
+        <a class="btn btn-ghost" href="#features">了解功能</a>
+      </div>
+    </div>
+
+    <!-- 键盘面板模拟 -->
+    <div class="kbd-demo" aria-hidden="true">
+      <div class="kbd-toolbar"><span class="dot"></span>正在聆听，点击结束</div>
+      <div class="kbd-modes">
+        <span class="on">中英混合</span><span>123</span><span>English</span>
+      </div>
+      <div class="kbd-stage">
+        <div class="kbd-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="kbd-mic">
+          <svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg>
+        </div>
+        <div class="kbd-hint">点击麦克风开始说话</div>
+      </div>
+      <div class="kbd-actions">
+        <span>✦ 指令</span><span>总结</span><span>翻译</span><span>整理</span><span>⌘ 快捷键</span><span>手写</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="philosophy">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">设计理念</div>
+      <h2>没有键盘，是刻意的</h2>
+      <p>取消键盘不是做减法，而是把「说、写、改、理」四件事交给最合适的方式：语音负责速度，手写负责精度，指令负责改写，每日整理负责回顾。它们彼此配合，构成一条完整的输入闭环。</p>
+    </div>
+    <div class="loop">
+      <div class="card loop-step">
+        <div class="loop-num">①</div>
+        <h3>语音速记</h3>
+        <p>按住即说、实时上屏，思考的速度就是成文的速度。长文、灵感、消息，先说出来再说。</p>
+      </div>
+      <div class="loop-arrow">→</div>
+      <div class="card loop-step">
+        <div class="loop-num">②</div>
+        <h3>手写精修</h3>
+        <p>手写与语音默契配合：手写负责精准定位与补字，语音负责说出改法——这是<strong>局部修改的最佳方案</strong>，不改全文，只动该动的地方。</p>
+      </div>
+      <div class="loop-arrow">→</div>
+      <div class="card loop-step">
+        <div class="loop-num">③</div>
+        <h3>✦ 指令改写</h3>
+        <p>AI 辅助改写是语音输入的必要搭档：口述难免口语化，一句指令就能润色成稿。输入法由此成为一个随身的<strong>小型 AI Chat 入口</strong>。</p>
+      </div>
+      <div class="loop-arrow">→</div>
+      <div class="card loop-step">
+        <div class="loop-num">④</div>
+        <h3>每日整理</h3>
+        <p>一键梳理当日全部语音、手写与指令输入，AI 生成当日摘要——<strong>高效回顾一天输入内容的最佳方案</strong>，也是 InkTalk 最大的特点之一。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">功能</div>
+      <h2>一块键盘，覆盖从听写到成稿</h2>
+      <p>语音是主线，AI 与手写是补充。所有功能都在输入法面板内完成，不需要离开当前应用。</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 1 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg></div>
+        <h3>低延迟实时听写</h3>
+        <p>双向流式端点（bigmodel_async），200 ms 音频分包，识别结果只在变化时下发；边说边上屏，结束自动定稿。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 9h-3.02a15.7 15.7 0 0 0-1.2-5.02A8.02 8.02 0 0 1 19.93 11zM12 4.06c.62.86 1.6 2.8 1.9 4.94h-3.8c.3-2.14 1.28-4.08 1.9-4.94zM4.07 13h3.02c.14 1.94.58 3.64 1.2 5.02A8.02 8.02 0 0 1 4.07 13zm3.02-2H4.07a8.02 8.02 0 0 1 4.22-5.02A15.7 15.7 0 0 0 7.09 11zm2.81 2h4.2c-.3 2.14-1.28 4.08-1.9 4.94-.62-.86-1.6-2.8-1.9-4.94zm1.61 5.02c.62-1.38 1.06-3.08 1.2-5.02h3.02a8.02 8.02 0 0 1-4.22 5.02z"/></svg></div>
+        <h3>四种输入模式</h3>
+        <p>中文、实时中英混合、数字口述（自动规整为阿拉伯数字）、英文优先定稿（en-US），一键切换，随说随换。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l1.9 5.7 6.1.4-4.8 3.8 1.7 6L12 14.3 7.1 17.9l1.7-6L4 8.1l6.1-.4z"/></svg></div>
+        <h3>✦ 自由语音指令 · 你的 AI Chat 入口</h3>
+        <p>说出修改要求即可改稿：支持选区修改、全文修改与光标处生成。结果先在面板预览，确认后才写入——输入法从此也是一个随身的 AI Chat。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M11 2h2v7h7v2h-7v7h-2v-7H4V9h7V2z" transform="rotate(45 12 12)"/></svg></div>
+        <h3>AI 总结 / 翻译 / 整理</h3>
+        <p>优先处理选中文本，未选中时处理本次语音内容。接入任意 OpenAI 兼容 API，结果可追加或直接替换原文。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M20.7 5.6a1 1 0 0 0 0-1.4l-1.9-1.9a1 1 0 0 0-1.4 0L3 16.7V21h4.3L20.7 7a1 1 0 0 0 0-1.4zM6 19H5v-1l9.9-9.9 1 1L6 19z"/></svg></div>
+        <h3>手写输入 · 语音的精修搭档</h3>
+        <p>基于 ML Kit 数字墨迹识别，支持简体中文与英文，模型按语言下载后离线可用。与语音配合，是局部修改的最佳方案：手写定位，语音改法。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm2 3v2h2V8H6zm0 4v2h2v-2H6zm4-4v2h2V8h-2zm0 4v2h2v-2h-2zm4-4v2h2V8h-2zm0 4v2h2v-2h-2z"/></svg></div>
+        <h3>⌘ 快捷键面板</h3>
+        <p>ESC、Tab、全选、复制、粘贴、撤销（Ctrl+Z）与方向键，5×2 等宽网格，横向滑动切换，编辑长文不求人。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm1 4h-2v6l5 3 1-1.73-4-2.37V7z"/></svg></div>
+        <h3>每日输入记录 · 当日整理</h3>
+        <p>语音、手写、指令与 AI 结果按日期归档在本机，一键「整理当日内容」即可让 AI 生成当日摘要——高效梳理一天所有输入，InkTalk 最大的特点之一。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 0 0-2 2v16l7-4 7 4V5a2 2 0 0 0-2-2z"/></svg></div>
+        <h3>热词与参数控制</h3>
+        <p>专有名词热词提升识别准确率；智能标点、数字规整（ITN）、语义顺滑（DDC）均可在设置中独立开关。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M7 7h10v2l3-3-3-3v2H5v6h2V7zm10 10H7v-2l-3 3 3 3v-2h12v-6h-2v4z"/></svg></div>
+        <h3>配置导入导出</h3>
+        <p>语音识别、AI 与输入模式配置可导出为 JSON 备份、换机导入，单文件上限 128 KB，导出前提示敏感凭据风险。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">原理</div>
+      <h2>两段式架构：先听清，再写好</h2>
+      <p>语音识别与 AI 处理相互独立，均可自由替换服务方，凭据只保存在本机。</p>
+    </div>
+    <div class="flow">
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm4 6h2v-2H7v2zM3 17h2v-2H3v2zm0-8h2V7H3v2zm12 10h2v-2h-2v2zM19 7h2V5h-2v2zm0 10h2v-2h-2v2zM11 21h2V3h-2v18zm8-8h2v-2h-2v2zm-4-4h2V7h-2v2zm4 0h2V7h-2v2z"/></svg></div>
+        <h3>① 语音识别 · 火山引擎</h3>
+        <p>豆包流式语音识别大模型 2.0（SAUC 二进制协议，WebSocket + gzip）。16 kHz 单声道 PCM 以 200 ms 分片上行，async 端点专属二遍识别负责最终定稿；单次会话最长 120 秒，超时自动结束。</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2zm-2 19a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-1h-4v1z"/></svg></div>
+        <h3>② AI 处理 · 任意 OpenAI 兼容接口</h3>
+        <p>总结、翻译、整理与语音指令走标准 <code>chat/completions</code>。可配置 Base URL、API Key 与模型名；「关闭思考模式」开关自动适配通义、火山方舟豆包与 OpenAI gpt-5 系三类参数。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">快速开始</div>
+      <h2>三分钟完成配置</h2>
+      <p>需要火山引擎「豆包流式语音识别大模型 2.0」凭据（按音频时长计费）；AI 功能为可选项。</p>
+    </div>
+    <ol class="steps">
+      <li><strong>三步引导</strong><span>安装后打开设置页，依次完成：启用 InkTalk 输入法 → 切换到 InkTalk → 授予录音权限。</span></li>
+      <li><strong>填入凭据</strong><span>新版控制台只需填 API Key；旧版控制台填 App ID + Access Token。点「测试 ASR 连接」，成功会返回 logid。</span></li>
+      <li><strong>开始使用</strong><span>在任意输入框唤出 InkTalk，选好模式后点大麦克风说话，再点一次结束上屏。需要改稿时点 ✦ 说出指令，预览确认后替换。</span></li>
+    </ol>
+    <div class="build-cmd"><span class="c"># 自行构建（需要 JDK 17+ 与 Android SDK，compileSdk 37 / minSdk 26）</span>
+./gradlew :app:assembleDebug
+<span class="c"># 产物：app/build/outputs/apk/debug/app-debug.apk</span></div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">隐私与安全</div>
+      <h2>凭据不出机，敏感场景自动回避</h2>
+    </div>
+    <div class="privacy">
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2L4 5v6c0 5 3.4 9.74 8 11 4.6-1.26 8-6 8-11V5l-8-3zm0 10.99h6c-.53 4-3.06 7.6-6 8.92V13H6V6.3l6-2.25v8.94z"/></svg></div>
+        <h3>本机存储</h3>
+        <p>API Key、App ID、Access Token 只存本机 SharedPreferences，应用不内置任何密钥；每日输入记录仅追加保存在本机数据库，整理结果单独保存、不覆盖原文。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 6a9.77 9.77 0 0 1 8.82 5.5 9.65 9.65 0 0 1-1.66 2.44l1.42 1.42A11.6 11.6 0 0 0 22.46 11.5 11.77 11.77 0 0 0 12 4.5c-1.77 0-3.41.39-4.87 1.01l1.58 1.58A9.7 9.7 0 0 1 12 6zm-9.9-.19l2.06 2.06A11.6 11.6 0 0 0 1.54 11.5a11.77 11.77 0 0 0 15.6 5.59l2.1 2.1 1.41-1.41L3.51 4.4 2.1 5.81zM12 17a5.5 5.5 0 0 1-5.5-5.5c0-.77.18-1.5.49-2.14l1.57 1.57A3.47 3.47 0 0 0 8.5 11.5 3.5 3.5 0 0 0 12 15c.64 0 1.25-.17 1.76-.47l1.58 1.58c-.63.31-1.37.49-2.15.39z"/></svg></div>
+        <h3>敏感输入框保护</h3>
+        <p>密码、PIN 等敏感输入框中禁用指令模式，也不会写入每日记录；宿主无法提供完整文本时，指令模式拒绝执行，不会把残缺上下文当作全文。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 11.24V7.5a2.5 2.5 0 0 1 5 0v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zM18.84 10.6l-7.5 7.52-3.17-3.17a4.98 4.98 0 0 1 0-7.07L7.11 6.82A7.01 7.01 0 0 0 8.8 18.36l-2.3 2.3 1.41 1.42 2.3-2.3a7 7 0 0 0 4.3-1.12l5.74-5.74-1.41-1.42z" transform="translate(0.5 0.5) scale(0.96)"/></svg></div>
+        <h3>写入前校验</h3>
+        <p>AI 与指令结果写入前会复核选区、光标与原文；任一发生变化即取消写入，避免误删。指令模式单次完整上下文上限 6,000 字符。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 0 1 7-7 7 7 0 0 1 7 7 7 7 0 0 1-7 7 6.99 6.99 0 0 1-4.95-2.05l-1.41 1.42A8.98 8.98 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg></div>
+        <h3>触觉反馈遵循系统</h3>
+        <p>麦克风、模式切换与快捷键使用 Android 原生触觉反馈，自动遵循系统「触摸反馈」开关，不额外申请震动权限。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">已知限制</div>
+      <h2>使用前请了解</h2>
+    </div>
+    <ul class="limits">
+      <li>语音识别单次会话最长 120 秒，超时自动结束。</li>
+      <li>「实时中英混合」不严格过滤中文；「英文优先定稿」仍可能返回中文内容。</li>
+      <li>指令模式依赖宿主应用提供完整文本与选区，部分应用可能不支持。</li>
+      <li>快捷键面板的「撤销」发送 Ctrl+Z 按键事件，是否生效取决于目标应用。</li>
+      <li>识别参数（采样率 16 kHz、endpointing 800 ms）为固定推荐值，暂未全部开放。</li>
+      <li>部分 AI 提供方对「关闭思考模式」参数报 400，此时请关闭开关或改用非思考模型。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap download">
+    <img src="assets/icon.png" alt="InkTalk 图标" style="width:76px;height:76px;border-radius:18px;margin-bottom:20px;box-shadow:0 10px 26px rgba(48,42,37,.18);">
+    <h2>让说话的速度，成为打字的速度</h2>
+    <p>InkTalk 为个人项目，可自行构建 APK 安装使用。接入需自备火山引擎语音识别凭据；AI 功能支持任意 OpenAI 兼容服务。</p>
+    <div class="cta" style="justify-content:center;display:flex;gap:14px;flex-wrap:wrap;">
+      <a class="btn btn-primary" href="assets/InkTalk-0.2.0-release.apk" download>下载 APK（v0.2.0 · 33 MB）</a>
+      <a class="btn btn-ghost" href="#start">查看快速开始</a>
+    </div>
+  </div>
+</section>
+
+<section id="inspiration">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">灵感来源</div>
+      <h2>缘起一条帖子</h2>
+    </div>
+    <div class="card" style="max-width: 720px;">
+      <blockquote style="border-left: 3px solid var(--accent-bright); padding-left: 18px; margin-bottom: 16px; color: var(--ink-soft); font-size: 15.5px;">
+        「好了，自己写了一个输入法。语音识别用的豆包模型。获取上下文来总结和拟定邮件回复。特意做窄一点方便胖折叠用。」
+        <div style="margin-top: 8px; font-size: 13.5px; color: var(--ink-muted);">—— <a href="https://x.com/taresky/status/2088553714894393390?s=20" target="_blank" rel="noopener">@taresky 的 X 帖子</a></div>
+      </blockquote>
+      <p style="font-size: 14.5px;">
+        InkTalk 的开发正是受到这条帖子内容的启发：语音识别负责输入，AI 结合上下文完成总结与回复。
+        我们把这个想法做成了一款完整的输入法，并将开发结果<strong style="color: var(--accent);">免费提供给有类似需求的用户</strong>——凭据自备，代码自行构建即可使用。
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>InkTalk · 纯语音 Android 输入法</span>
+    <span>语音识别：火山引擎 豆包流式语音识别大模型 2.0 · AI：OpenAI 兼容接口 · 手写：ML Kit 数字墨迹识别</span>
+  </div>
+</footer>
+
+</body>
+</html>

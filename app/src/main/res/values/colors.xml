@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="panel_bg">#F5F7FB</color>
+    <color name="toolbar_bg">#FBFCFF</color>
+    <color name="surface">#FFFCF8</color>
+    <color name="surface_muted">#EDF3FA</color>
+    <color name="action_chip_bg">#F1F5FC</color>
+    <color name="action_chip_border">#B8C8DD</color>
+    <color name="mic_accent">#1769E0</color>
+    <color name="mic_recording">#C4473D</color>
+    <color name="chip_text">#27364A</color>
+    <color name="icon_primary">#263B59</color>
+    <color name="icon_muted">#6C7D92</color>
+    <color name="text_primary">#1F2B3A</color>
+    <color name="text_hint">#637388</color>
+    <color name="wave_bar">#2C7FF8</color>
+    <color name="divider">#CBD6E4</color>
+    <color name="divider_soft">#E3EAF2</color>
+    <color name="mode_selected">#DCE9FF</color>
+    <color name="app_icon_background">#0878F9</color>
+    <color name="ripple_neutral">#24263B59</color>
+    <color name="ripple_accent">#331769E0</color>
+    <color name="error_red">#C4473D</color>
+    <color name="status_ok">#2F7657</color>
+</resources>

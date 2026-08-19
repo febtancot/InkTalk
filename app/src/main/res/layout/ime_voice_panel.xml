@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="340dp"
+    android:orientation="vertical"
+    android:background="@color/panel_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="0dp"
+        android:paddingEnd="4dp"
+        android:background="@color/toolbar_bg">
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="4dp">
+                <TextView
+                    android:id="@+id/btnSummarize"
+                    style="@style/ActionChipButton"
+                    android:text="@string/ai_summarize"
+                    android:drawableStart="@drawable/ic_material_auto_awesome_18"
+                    android:contentDescription="@string/a11y_summarize" />
+                <TextView
+                    android:id="@+id/btnTranslate"
+                    style="@style/ActionChipButton"
+                    android:text="@string/ai_translate"
+                    android:drawableStart="@drawable/ic_material_translate_18"
+                    android:contentDescription="@string/a11y_translate" />
+                <TextView
+                    android:id="@+id/btnPolish"
+                    style="@style/ActionChipButton"
+                    android:text="@string/ai_polish"
+                    android:drawableStart="@drawable/ic_material_auto_fix_18"
+                    android:contentDescription="@string/a11y_polish" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="2dp"
+            android:background="@drawable/bg_toolbar_action_group">
+            <ImageButton
+                android:id="@+id/btnCmd"
+                style="@style/ToolbarIconButton"
+                android:src="@drawable/ic_material_terminal_24"
+                android:contentDescription="@string/a11y_shortcuts" />
+            <ImageButton
+                android:id="@+id/btnDelete"
+                style="@style/ToolbarIconButton"
+                android:padding="9dp"
+                android:src="@drawable/ic_material_backspace_24"
+                android:contentDescription="@string/a11y_delete" />
+            <ImageButton
+                android:id="@+id/btnEnter"
+                style="@style/ToolbarIconButton"
+                android:src="@drawable/ic_material_keyboard_return_24"
+                android:contentDescription="@string/a11y_enter" />
+            <ImageButton
+                android:id="@+id/btnSwitchKeyboard"
+                style="@style/ToolbarIconButton"
+                android:src="@drawable/ic_material_keyboard_24"
+                android:contentDescription="@string/a11y_switch_keyboard" />
+            <ImageButton
+                android:id="@+id/btnSettings"
+                style="@style/ToolbarIconButton"
+                android:src="@drawable/ic_material_settings_24"
+                android:contentDescription="@string/a11y_settings" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_soft" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/pageVoice"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/inputModeGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:padding="3dp"
+                android:background="@drawable/bg_mode_group">
+                <TextView
+                    android:id="@+id/btnModeChinese"
+                    style="@style/InputModeButton"
+                    android:text="@string/mode_chinese" />
+                <TextView
+                    android:id="@+id/btnModeNumber"
+                    style="@style/InputModeButton"
+                    android:text="@string/mode_number" />
+                <TextView
+                    android:id="@+id/btnModeEnglish"
+                    style="@style/InputModeButton"
+                    android:text="@string/mode_english" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textInstructionScope"
+                style="@style/InstructionScopeChip"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="3dp"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/inputContentArea"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <ScrollView
+                    android:id="@+id/previewContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:fillViewport="true"
+                    android:paddingTop="6dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp">
+                    <TextView
+                        android:id="@+id/textPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:textAlignment="center"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"
+                        android:lineSpacingMultiplier="1.25" />
+                </ScrollView>
+
+                <LinearLayout
+                    android:id="@+id/handwritingPanel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="10dp"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1">
+                        <com.inktalk.ime.ui.HandwritingPadView
+                            android:id="@+id/handwritingPad"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_handwriting_pad" />
+                        <LinearLayout
+                            android:id="@+id/handwritingLanguageGroup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:layout_gravity="top|start"
+                            android:layout_margin="6dp"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:padding="3dp"
+                            android:background="@drawable/bg_mode_group">
+                            <TextView
+                                android:id="@+id/btnHandwritingChinese"
+                                style="@style/InputModeButton"
+                                android:layout_width="64dp"
+                                android:text="@string/handwriting_language_chinese"
+                                android:contentDescription="@string/a11y_handwriting_chinese" />
+                            <TextView
+                                android:id="@+id/btnHandwritingEnglish"
+                                style="@style/InputModeButton"
+                                android:layout_width="72dp"
+                                android:text="@string/handwriting_language_english"
+                                android:contentDescription="@string/a11y_handwriting_english" />
+                        </LinearLayout>
+                        <TextView
+                            android:id="@+id/btnClearHandwriting"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="6dp"
+                            android:minWidth="52dp"
+                            android:gravity="center"
+                            android:text="@string/handwriting_clear"
+                            android:textColor="@color/chip_text"
+                            android:textSize="12sp"
+                            android:background="@drawable/bg_action_chip"
+                            android:contentDescription="@string/a11y_clear_handwriting" />
+                    </FrameLayout>
+
+                    <HorizontalScrollView
+                        android:id="@+id/handwritingCandidateScroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:fillViewport="true"
+                        android:scrollbars="none"
+                        android:visibility="gone">
+                        <LinearLayout
+                            android:id="@+id/handwritingCandidates"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical" />
+                    </HorizontalScrollView>
+                </LinearLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/textStatus"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="12sp"
+                android:textColor="@color/text_hint"
+                android:text="@string/hint_tap_to_talk" />
+
+            <com.inktalk.ime.ui.WaveformView
+                android:id="@+id/waveform"
+                android:layout_width="match_parent"
+                android:layout_height="18dp"
+                android:layout_marginStart="48dp"
+                android:layout_marginEnd="48dp" />
+
+            <FrameLayout
+                android:id="@+id/voiceActionArea"
+                android:layout_width="match_parent"
+                android:layout_height="78dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="10dp">
+                <FrameLayout
+                    android:id="@+id/voicePurposeControls"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:clipChildren="false">
+                    <FrameLayout
+                        android:layout_width="84dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginStart="12dp"
+                        android:padding="2dp"
+                        android:background="@drawable/bg_mode_group">
+                        <View
+                            android:id="@+id/voicePurposeThumb"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:background="@drawable/bg_mode_selected" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:gravity="center">
+                            <ImageButton
+                                android:id="@+id/btnInstruction"
+                                style="@style/VoicePurposeIconButton"
+                                android:src="@drawable/ic_voice_instruction_24"
+                                android:contentDescription="@string/a11y_instruction" />
+                            <ImageButton
+                                android:id="@+id/btnHandwritingMode"
+                                style="@style/VoicePurposeIconButton"
+                                android:src="@drawable/ic_material_draw_24"
+                                android:contentDescription="@string/a11y_enable_handwriting" />
+                        </LinearLayout>
+                    </FrameLayout>
+                    <ImageButton
+                        android:id="@+id/btnMic"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center"
+                        android:padding="19dp"
+                        android:src="@drawable/ic_mic_white"
+                        android:background="@drawable/bg_mic_button"
+                        android:contentDescription="@string/a11y_start_recording"
+                        android:elevation="2dp"
+                        android:scaleType="fitCenter" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/instructionReviewActions"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:id="@+id/btnInstructionCancel"
+                        style="@style/InstructionSecondaryAction"
+                        android:text="@string/instruction_cancel" />
+                    <TextView
+                        android:id="@+id/btnInstructionRetry"
+                        style="@style/InstructionSecondaryAction"
+                        android:text="@string/instruction_retry" />
+                    <TextView
+                        android:id="@+id/btnInstructionApply"
+                        style="@style/InstructionPrimaryAction"
+                        android:text="@string/instruction_apply" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/pageKeys"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="132dp"
+                android:layout_gravity="center"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="66dp"
+                    android:weightSum="5"
+                    android:gravity="center"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+                    <TextView android:id="@+id/keyEsc" style="@style/FnKey" android:text="@string/key_escape" />
+                    <TextView android:id="@+id/keyTab" style="@style/FnKey" android:text="@string/key_tab" />
+                    <TextView android:id="@+id/keySelectAll" style="@style/FnKey" android:text="@string/key_select_all" android:contentDescription="@string/a11y_select_all" />
+                    <TextView android:id="@+id/keyCopy" style="@style/FnKey" android:text="@string/key_copy" android:contentDescription="@string/a11y_copy" />
+                    <TextView android:id="@+id/keyPaste" style="@style/FnKey" android:text="@string/key_paste" android:contentDescription="@string/a11y_paste" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="66dp"
+                    android:weightSum="5"
+                    android:gravity="center"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+                    <TextView android:id="@+id/keyUndo" style="@style/FnKey" android:text="@string/key_undo" android:contentDescription="@string/a11y_undo" />
+                    <ImageButton android:id="@+id/keyLeft" style="@style/FnIconKey" android:src="@drawable/ic_material_arrow_back_24" android:contentDescription="@string/a11y_left" />
+                    <ImageButton android:id="@+id/keyUp" style="@style/FnIconKey" android:src="@drawable/ic_material_arrow_up_24" android:contentDescription="@string/a11y_up" />
+                    <ImageButton android:id="@+id/keyDown" style="@style/FnIconKey" android:src="@drawable/ic_material_arrow_down_24" android:contentDescription="@string/a11y_down" />
+                    <ImageButton android:id="@+id/keyRight" style="@style/FnIconKey" android:src="@drawable/ic_material_arrow_forward_24" android:contentDescription="@string/a11y_right" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
+    </FrameLayout>
+</LinearLayout>

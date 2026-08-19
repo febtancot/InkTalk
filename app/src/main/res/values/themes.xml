@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.InkTalk" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorAccent">@color/mic_accent</item>
+        <item name="android:windowBackground">@color/panel_bg</item>
+        <item name="android:statusBarColor">@color/toolbar_bg</item>
+        <item name="android:navigationBarColor">@color/toolbar_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

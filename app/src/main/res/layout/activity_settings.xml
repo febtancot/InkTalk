@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/settingsScroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:scrollbars="none"
+    android:overScrollMode="ifContentScrolls">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="48dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <ImageButton
+                android:id="@+id/btnSettingsBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:padding="10dp"
+                android:src="@drawable/ic_material_arrow_back_24"
+                android:tint="@color/icon_primary"
+                android:background="@drawable/bg_icon_button"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/settings_back_to_history"
+                tools:ignore="UseAppTint" />
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@mipmap/ic_launcher"
+                android:scaleType="centerInside"
+                android:contentDescription="@null" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+                <TextView
+                    style="@style/SettingsHeaderTitle"
+                    android:text="@string/settings_title" />
+                <TextView
+                    style="@style/SettingsHeaderSubtitle"
+                    android:text="@string/settings_subtitle" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView style="@style/SettingsSection" android:text="@string/settings_quick_start" />
+        <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_quick_start_description" />
+        <LinearLayout style="@style/SettingsCard">
+            <Button
+                android:id="@+id/btnEnableIme"
+                style="@style/SettingsActionButton"
+                android:text="@string/settings_enable_ime"
+                android:drawableStart="@drawable/ic_material_keyboard_24" />
+            <Button
+                android:id="@+id/btnPickIme"
+                style="@style/SettingsActionButton"
+                android:text="@string/settings_pick_ime"
+                android:drawableStart="@drawable/ic_material_swap_24" />
+            <Button
+                android:id="@+id/btnMicPermission"
+                style="@style/SettingsActionButton"
+                android:layout_marginBottom="0dp"
+                android:text="@string/settings_mic_permission"
+                android:drawableStart="@drawable/ic_material_mic_24" />
+        </LinearLayout>
+
+        <TextView style="@style/SettingsSection" android:text="@string/settings_asr_section" />
+        <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_asr_description" />
+        <LinearLayout style="@style/SettingsCard">
+            <Button
+                android:id="@+id/btnOpenSpeechConsole"
+                style="@style/SettingsActionButton"
+                android:text="@string/settings_open_speech_console"
+                android:drawableStart="@drawable/ic_material_open_in_new_24" />
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_api_key_label" />
+            <EditText
+                android:id="@+id/editApiKey"
+                style="@style/SettingsInput"
+                android:hint="@string/settings_api_key_hint"
+                android:inputType="textPassword"
+                android:importantForAutofill="no" />
+
+            <TextView
+                style="@style/SettingsHint"
+                android:text="@string/settings_legacy_credentials_hint" />
+
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_app_id_label" />
+            <EditText
+                android:id="@+id/editAppKey"
+                style="@style/SettingsInput"
+                android:hint="@string/settings_app_id_hint"
+                android:inputType="textPassword"
+                android:importantForAutofill="no" />
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_access_token_label" />
+            <EditText
+                android:id="@+id/editAccessKey"
+                style="@style/SettingsInput"
+                android:hint="@string/settings_access_token_hint"
+                android:inputType="textPassword"
+                android:importantForAutofill="no" />
+
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_resource_label" />
+            <TextView style="@style/SettingsFieldDescription" android:text="@string/settings_resource_description" />
+            <Spinner
+                android:id="@+id/spinnerResource"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="52dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/bg_settings_input" />
+
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_english_recognition_label" />
+            <TextView style="@style/SettingsFieldDescription" android:text="@string/settings_english_recognition_description" />
+            <Spinner
+                android:id="@+id/spinnerEnglishRecognition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="52dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/bg_settings_input" />
+
+            <View style="@style/SettingsDivider" />
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_ddc_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_ddc_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchDdc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <View style="@style/SettingsDivider" />
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_punc_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_punc_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchPunc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+            <View style="@style/SettingsDivider" />
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_itn_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_itn_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchItn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnTestAsr"
+                style="@style/SettingsSecondaryButton"
+                android:text="@string/settings_test_asr"
+                android:drawableStart="@drawable/ic_material_check_circle_24" />
+        </LinearLayout>
+
+        <TextView style="@style/SettingsSection" android:text="@string/settings_ai_section" />
+        <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_ai_description" />
+        <LinearLayout style="@style/SettingsCard">
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_base_url_label" />
+            <EditText
+                android:id="@+id/editAiBaseUrl"
+                style="@style/SettingsInput"
+                android:hint="@string/settings_base_url_hint"
+                android:inputType="textUri"
+                android:importantForAutofill="no" />
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_ai_api_key_label" />
+            <EditText
+                android:id="@+id/editAiApiKey"
+                style="@style/SettingsInput"
+                android:hint="@string/settings_ai_api_key_hint"
+                android:inputType="textPassword"
+                android:importantForAutofill="no" />
+            <TextView style="@style/SettingsLabel" android:text="@string/settings_model_label" />
+            <EditText
+                android:id="@+id/editAiModel"
+                style="@style/SettingsInput"
+                android:hint="@string/settings_model_hint"
+                android:inputType="text"
+                android:importantForAutofill="no" />
+
+            <View style="@style/SettingsDivider" />
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_no_thinking_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_no_thinking_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchNoThinking"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <View style="@style/SettingsDivider" />
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_replace_original_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_replace_original_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchReplaceOriginal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnTestAi"
+                style="@style/SettingsSecondaryButton"
+                android:text="@string/settings_test_ai"
+                android:drawableStart="@drawable/ic_material_auto_awesome_18" />
+        </LinearLayout>
+
+        <TextView style="@style/SettingsSection" android:text="@string/settings_management_section" />
+        <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_management_description" />
+        <LinearLayout style="@style/SettingsCard">
+            <Button
+                android:id="@+id/btnEditHotwords"
+                style="@style/SettingsActionButton"
+                android:text="@string/settings_edit_hotwords"
+                android:drawableStart="@drawable/ic_material_terminal_24" />
+            <Button
+                android:id="@+id/btnOpenBackup"
+                style="@style/SettingsActionButton"
+                android:layout_marginBottom="0dp"
+                android:text="@string/settings_open_backup"
+                android:drawableStart="@drawable/ic_material_save_24" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnSave"
+            style="@style/SettingsPrimaryButton"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="@string/settings_save">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_material_save_24"
+                android:tint="@android:color/white"
+                tools:ignore="UseAppTint"
+                android:contentDescription="@null" />
+            <TextView
+                style="@style/SettingsPrimaryButtonLabel"
+                android:text="@string/settings_save"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textStatus"
+            style="@style/SettingsStatus"
+            android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

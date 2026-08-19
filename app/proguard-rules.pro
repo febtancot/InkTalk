@@ -1,0 +1,3 @@
+-keep class com.inktalk.ime.** { *; }
+-dontwarn okio.**
+-dontwarn okhttp3.**
