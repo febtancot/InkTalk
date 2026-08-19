@@ -100,3 +100,25 @@ Files:
 
 - `C1OB-blue-palette-v1.png`
 - `C1OB-blue-palette-flat-retry.png`
+
+## Blue adaptive-icon safe-zone package
+
+The two built-in ImageGen background-extraction attempts returned RGB PNGs with
+painted checkerboards and no alpha channel. They were rejected and preserved.
+The final foreground was then derived deterministically from the checkerboard's
+neutral saturation boundary, with the procedure and edge cleanup recorded in
+`adaptive-icon-blue/build_adaptive_icon.py`.
+
+- Android layer canvas: `108 x 108 dp`
+- Guaranteed safe zone: centered `66 x 66 dp`
+- Audit canvas: `1080 x 1080 px`
+- Foreground bbox: `(211, 318)-(869, 761)`
+- Safe-zone bbox: `(210, 210)-(870, 870)`
+- Background: exact `#0878F9` outside every foreground alpha pixel
+- Foreground: real RGBA, transparent at all four corners
+- Project candidate: `@mipmap/ic_launcher_blue_candidate`
+- Active manifest icon: unchanged (`@mipmap/ic_launcher`)
+- Native 32 x 32 preview remains readable
+- Android resource processing, Debug assembly, and Lint passed
+- Debug APK contains the foreground PNG and candidate adaptive XML
+- Physical launcher/OEM-mask visual acceptance remains pending
