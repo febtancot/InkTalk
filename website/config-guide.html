@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API 配置与获取指南 — InkTalk</title>
+<meta name="description" content="InkTalk API 配置与获取指南：火山引擎豆包流式语音识别、OpenAI 兼容 AI 文本服务（OpenAI、阿里云百炼、火山方舟、DeepSeek）、Google ML Kit 手写识别的开通与填写步骤。">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<style>
+  :root {
+    --paper: #F5F2EC;
+    --paper-soft: #FAF8F3;
+    --surface: #FFFFFF;
+    --ink: #1F2A44;
+    --ink-soft: #33405C;
+    --ink-muted: #66708A;
+    --accent: #0F62E6;
+    --accent-bright: #2F7BF0;
+    --divider: #D9DDE6;
+    --divider-soft: #E8EAF0;
+    --chip-bg: #EAF1FE;
+    --chip-border: #C4D8FA;
+    --badge-bg: #DDE9FD;
+    --warn-bg: #FDF1E8;
+    --warn-border: #F2D9BE;
+    --warn-ink: #9A5B12;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- 导航 ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(247, 240, 232, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--divider-soft);
+  }
+  nav .wrap { max-width: 1080px; display: flex; align-items: center; gap: 12px; height: 60px; }
+  nav img { width: 30px; height: 30px; border-radius: 7px; }
+  nav .brand { font-weight: 700; font-size: 17px; color: var(--ink); letter-spacing: 0.2px; }
+  nav .brand:hover { text-decoration: none; }
+  nav .links { margin-left: auto; display: flex; gap: 22px; font-size: 14px; }
+  nav .links a { color: var(--ink-soft); }
+  nav .links a:hover { color: var(--accent); text-decoration: none; }
+  nav .links a.current { color: var(--accent); font-weight: 600; }
+  @media (max-width: 640px) { nav .links a:not(.current) { display: none; } }
+
+  .btn {
+    display: inline-block; padding: 10px 22px; border-radius: 10px;
+    font-size: 15px; font-weight: 600; transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #F4F8FF !important; box-shadow: 0 4px 14px rgba(15, 98, 230, .30); }
+  .btn-ghost { border: 1px solid var(--divider); color: var(--ink-soft) !important; background: var(--surface); }
+
+  /* ---------- 页头 ---------- */
+  header.page-head { padding: 56px 0 40px; border-bottom: 1px solid var(--divider-soft); }
+  header.page-head .kicker { font-size: 13px; font-weight: 700; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+  header.page-head h1 { font-size: 34px; margin: 12px 0 14px; letter-spacing: 0.3px; }
+  @media (max-width: 640px) { header.page-head h1 { font-size: 27px; } }
+  header.page-head p.lead { color: var(--ink-muted); font-size: 15.5px; max-width: 42em; margin-bottom: 18px; }
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .meta-row span {
+    font-size: 12.5px; padding: 5px 12px; border-radius: 999px;
+    background: var(--chip-bg); color: var(--ink-soft); border: 1px solid var(--chip-border);
+  }
+
+  /* ---------- 目录 ---------- */
+  nav.toc { position: static; background: none; backdrop-filter: none; border: none; margin: 32px 0 0; }
+  nav.toc .toc-card {
+    background: var(--surface); border: 1px solid var(--divider-soft); border-radius: 16px; padding: 20px 24px;
+  }
+  nav.toc h2 { font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 12px; }
+  nav.toc ol { padding-left: 20px; columns: 2; column-gap: 28px; font-size: 14.5px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } }
+  nav.toc li { margin-bottom: 8px; break-inside: avoid; }
+
+  /* ---------- 正文区块 ---------- */
+  section.content-block { padding: 52px 0; }
+  section.content-block + section.content-block { border-top: 1px solid var(--divider-soft); }
+  .sec-head { max-width: 640px; margin-bottom: 28px; }
+  .sec-head .kicker { font-size: 13px; font-weight: 700; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+  .sec-head h2 { font-size: 26px; margin: 10px 0 10px; letter-spacing: 0.2px; }
+  .sec-head p { color: var(--ink-muted); font-size: 15px; }
+
+  .content h3 { font-size: 18px; margin: 30px 0 10px; color: var(--ink); }
+  .content h3:first-child { margin-top: 0; }
+  .content h4 { font-size: 15.5px; margin: 18px 0 8px; color: var(--ink-soft); }
+  .content p { margin-bottom: 14px; color: var(--ink-soft); font-size: 15px; }
+  .content ul, .content ol.plain { padding-left: 22px; margin-bottom: 14px; color: var(--ink-soft); font-size: 15px; }
+  .content ul li, .content ol.plain li { margin-bottom: 6px; }
+  .content code, table code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .88em; background: var(--chip-bg); border-radius: 5px; padding: 1px 6px; color: var(--accent);
+  }
+
+  /* ---------- 表格 ---------- */
+  .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); border: 1px solid var(--divider-soft); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--divider-soft); vertical-align: top; }
+  th { background: var(--paper-soft); color: var(--ink-soft); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ---------- 提示框 ---------- */
+  .note { background: var(--chip-bg); border: 1px solid var(--chip-border); border-radius: 12px; padding: 14px 18px; font-size: 14px; color: var(--ink-soft); margin: 4px 0 18px; }
+  .warn { background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 12px; padding: 14px 18px; font-size: 14px; color: var(--warn-ink); margin: 4px 0 18px; }
+
+  /* ---------- 检查表 ---------- */
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li { position: relative; padding-left: 28px; margin-bottom: 8px; font-size: 14.5px; color: var(--ink-soft); }
+  .checklist li::before { content: "\2610"; position: absolute; left: 0; top: 0; color: var(--accent); }
+  .checklist h4 { margin-top: 24px; }
+
+  footer { border-top: 1px solid var(--divider-soft); padding: 34px 0 44px; color: var(--ink-muted); font-size: 13.5px; }
+  footer .wrap { max-width: 1080px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <img src="assets/icon.png" alt="InkTalk 图标">
+    <a class="brand" href="index.html">InkTalk</a>
+    <div class="links">
+      <a href="index.html">首页</a>
+      <a href="index.html#start">快速开始</a>
+      <a class="current" href="config-guide.html">配置指南</a>
+      <a href="index.html#download">下载</a>
+    </div>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="wrap">
+    <div class="kicker">配置指南</div>
+    <h1>InkTalk API 配置与获取指南</h1>
+    <p class="lead">语音识别、AI 文本处理与手写识别分别使用不同服务与凭据，本页按服务逐一说明开通、获取与填写方式，以及常见错误的排查方向。</p>
+    <div class="meta-row">
+      <span>适用版本：InkTalk 0.2.0</span>
+      <span>更新日期：2026 年 8 月 19 日</span>
+      <span>适用对象：配置与维护人员</span>
+    </div>
+
+    <nav class="toc">
+      <div class="toc-card">
+        <h2>目录</h2>
+        <ol>
+          <li><a href="#overview">需要配置哪些服务</a></li>
+          <li><a href="#asr">一、火山引擎豆包流式语音识别</a></li>
+          <li><a href="#ai">二、OpenAI 兼容 AI 文本服务</a></li>
+          <li><a href="#handwriting">三、Google ML Kit 手写识别</a></li>
+          <li><a href="#security">四、密钥保存与备份安全</a></li>
+          <li><a href="#checklist">五、完整配置检查表</a></li>
+          <li><a href="#excluded">六、InkTalk 不使用的凭据</a></li>
+        </ol>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section class="content-block" id="overview">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">概览</div>
+      <h2>需要配置哪些服务</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>能力</th><th>是否必需</th><th>服务</th><th>需要填写的内容</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>语音输入</td><td>必需</td><td>火山引擎豆包流式语音识别</td><td>API Key，或旧版 App ID 与 Access Token；资源 ID</td></tr>
+          <tr><td>总结、翻译、整理、自由语音指令</td><td>可选</td><td>任意兼容 OpenAI Chat Completions 的模型服务</td><td>Base URL、API Key、模型 ID</td></tr>
+          <tr><td>中文和英文手写识别</td><td>可选</td><td>Google ML Kit Digital Ink Recognition</td><td>不需要 API Key；首次使用时下载语言模型</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn">语音识别和 AI 文本处理使用不同的服务与凭据。火山引擎豆包语音 API Key、火山方舟 API Key、阿里云百炼 API Key、OpenAI API Key 和 DeepSeek API Key 不能互相替代。</div>
+  </div>
+</section>
+
+<section class="content-block" id="asr">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">必需</div>
+      <h2>一、火山引擎豆包流式语音识别</h2>
+    </div>
+
+    <h3>1. 服务用途</h3>
+    <p>InkTalk 使用火山引擎双向流式语音识别 WebSocket 接口完成实时语音转写。默认配置为豆包流式语音识别模型 2.0 小时版：</p>
+    <ul>
+      <li>WebSocket：<code>wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async</code></li>
+      <li>默认资源 ID：<code>volc.seedasr.sauc.duration</code></li>
+      <li>官方协议文档：<a href="https://docs.volcengine.com/docs/6561/2630027?lang=zh" target="_blank" rel="noopener">双向流式语音识别 WebSocket</a></li>
+    </ul>
+
+    <h3>2. 开通服务</h3>
+    <ol class="plain">
+      <li>登录<a href="https://console.volcengine.com/speech/new/overview?projectName=default" target="_blank" rel="noopener">火山引擎豆包语音控制台</a>。</li>
+      <li>找到「语音识别大模型」或「豆包流式语音识别模型 2.0」。</li>
+      <li>按实际计费方式开通小时版或并发版。</li>
+      <li>记录开通的模型版本和计费方式。InkTalk 中选择的资源 ID 必须与控制台开通项一致。</li>
+    </ol>
+    <div class="note">控制台页面名称可能随火山引擎更新而变化。若控制台没有显示目标服务，应先确认账号实名认证、服务地域、项目和开通权限。</div>
+
+    <h3>3. 获取新版 API Key</h3>
+    <ol class="plain">
+      <li>打开<a href="https://console.volcengine.com/speech/new/setting/apikeys?projectName=default" target="_blank" rel="noopener">豆包语音 API Key 管理</a>。</li>
+      <li>创建或复制当前项目可用的 API Key。</li>
+      <li>在 InkTalk 设置页的「语音识别」区域填写「API Key」。</li>
+      <li>使用新版 API Key 时，将旧版 App ID 和 Access Token 留空。</li>
+    </ol>
+    <p>新版鉴权在 WebSocket 握手时使用 <code>X-Api-Key</code>。InkTalk 会自动生成请求 ID 和协议序号，不需要手工填写。</p>
+
+    <h3>4. 使用旧版 App ID 与 Access Token</h3>
+    <p>旧版控制台用户可以打开<a href="https://console.volcengine.com/speech/service/10035" target="_blank" rel="noopener">旧版语音服务控制台</a>查询 App ID 和 Access Token。</p>
+    <p>在 InkTalk 中：</p>
+    <ul>
+      <li>「API Key」留空。</li>
+      <li>「App ID」填写旧版 App ID，对应请求头 <code>X-Api-App-Key</code>。</li>
+      <li>「Access Token」填写旧版 Access Token，对应请求头 <code>X-Api-Access-Key</code>。</li>
+    </ul>
+    <div class="note">不要同时依赖两套凭据。只要「API Key」非空，InkTalk 就优先使用新版 API Key。</div>
+
+    <h3>5. 选择正确的资源 ID</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>InkTalk 选项</th><th>资源 ID</th><th>适用情况</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>豆包流式识别 2.0 · 小时版</td><td><code>volc.seedasr.sauc.duration</code></td><td>默认推荐；按音频时长计费</td></tr>
+          <tr><td>豆包流式识别 2.0 · 并发版</td><td><code>volc.seedasr.sauc.concurrent</code></td><td>已购买并发资源的账号</td></tr>
+          <tr><td>豆包流式识别 1.0 · 小时版</td><td><code>volc.bigasr.sauc.duration</code></td><td>仍在使用 1.0 小时版的账号</td></tr>
+          <tr><td>豆包流式识别 1.0 · 并发版</td><td><code>volc.bigasr.sauc.concurrent</code></td><td>仍在使用 1.0 并发版的账号</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn">资源 ID 与控制台开通项不一致时，可能出现 HTTP 401、403 或「resource not enabled」等错误。</div>
+
+    <h3>6. 在 InkTalk 中验证</h3>
+    <ol class="plain">
+      <li>打开 InkTalk 设置。</li>
+      <li>保存语音凭据和资源 ID。</li>
+      <li>点击「测试语音识别连接」。</li>
+      <li>InkTalk 会验证 WebSocket 握手、开始请求和服务端首包确认，不会访问麦克风。</li>
+      <li>出现「ASR 协议验证成功」和 <code>logid</code> 后，再到真实输入框测试麦克风、实时文本和最终定稿。</li>
+    </ol>
+    <div class="note">连接测试成功不等于真实录音已经验收。麦克风权限、手机录音通道、网络切换、长时间连接和第三方编辑器仍需分别测试。</div>
+
+    <h3>7. 排错链接</h3>
+    <ul>
+      <li><a href="https://docs.volcengine.com/docs/6561/2611432?lang=zh" target="_blank" rel="noopener">流式语音识别错误码</a></li>
+      <li><a href="https://docs.volcengine.com/docs/6561/1476626?lang=zh" target="_blank" rel="noopener">QPS 与并发查询说明</a></li>
+      <li><a href="https://docs.volcengine.com/docs/6561/1476625?lang=zh" target="_blank" rel="noopener">调用量查询说明</a></li>
+      <li><a href="https://docs.volcengine.com/docs/6561/155739?lang=zh" target="_blank" rel="noopener">热词配置</a></li>
+      <li><a href="https://docs.volcengine.com/docs/6561/2604976?lang=zh" target="_blank" rel="noopener">热词与上下文最佳实践</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="content-block" id="ai">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">可选</div>
+      <h2>二、OpenAI 兼容 AI 文本服务</h2>
+    </div>
+
+    <h3>1. InkTalk 的接口要求</h3>
+    <p>AI 文本处理是可选功能，用于总结、翻译、整理和自由语音指令。InkTalk 固定使用以下兼容方式：</p>
+    <ul>
+      <li>请求地址：<code>{Base URL}/chat/completions</code></li>
+      <li>请求方法：<code>POST</code></li>
+      <li>鉴权：<code>Authorization: Bearer {API Key}</code></li>
+      <li>请求主体：<code>model</code> 与 <code>messages</code></li>
+      <li>响应读取：<code>choices[0].message.content</code></li>
+    </ul>
+    <p>因此，提供方必须兼容 OpenAI Chat Completions 的请求和响应结构。填写 Base URL 时不要附加 <code>/chat/completions</code>，InkTalk 会自动追加该路径。</p>
+
+    <h3>2. 设置字段说明</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>字段</th><th>填写要求</th><th>示例</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Base URL</td><td>填写到版本根路径，不包含 <code>/chat/completions</code></td><td><code>https://api.openai.com/v1</code></td></tr>
+          <tr><td>API Key</td><td>从模型服务商控制台创建的调用密钥</td><td>不要填写 ChatGPT、百炼或方舟的登录密码</td></tr>
+          <tr><td>模型</td><td>提供方支持 Chat Completions 的模型 ID</td><td><code>gpt-4o-mini</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">保存后点击「测试 AI 连接」。InkTalk 会发送一段固定测试文本，这属于一次真实模型调用，可能产生费用。</div>
+
+    <h3>3. OpenAI API</h3>
+    <p>获取步骤：</p>
+    <ol class="plain">
+      <li>登录 <a href="https://platform.openai.com/" target="_blank" rel="noopener">OpenAI API Platform</a>。</li>
+      <li>在 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API Keys</a> 页面创建项目 API Key。</li>
+      <li>根据账号状态配置 API 计费与用量限制。ChatGPT 订阅与 API 用量属于不同产品，API 可用额度以 API Platform 为准。</li>
+      <li>在 InkTalk 中填写以下内容：</li>
+    </ol>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>InkTalk 字段</th><th>建议值</th></tr></thead>
+        <tbody>
+          <tr><td>Base URL</td><td><code>https://api.openai.com/v1</code></td></tr>
+          <tr><td>API Key</td><td>在 OpenAI API Platform 创建的项目 API Key</td></tr>
+          <tr><td>模型</td><td><code>gpt-4o-mini</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>gpt-4o-mini</code> 当前支持 <code>v1/chat/completions</code>。模型能力与可用端点见 <a href="https://developers.openai.com/api/docs/models/gpt-4o-mini" target="_blank" rel="noopener">OpenAI Docs：GPT-4o mini</a>，鉴权方式见 <a href="https://platform.openai.com/docs/api-reference/authentication" target="_blank" rel="noopener">OpenAI API Authentication</a>。</p>
+    <div class="warn">OpenAI 官方不建议把长期 API Key 放入移动客户端。InkTalk 当前是本机 BYOK（自带密钥）工具，适合个人受控设备；面向团队或公开分发时，应使用自己的服务端代理保存密钥，并给移动端签发受限的短期凭据。</div>
+
+    <h3>4. 阿里云百炼与千问</h3>
+    <p>获取步骤：</p>
+    <ol class="plain">
+      <li>阅读<a href="https://help.aliyun.com/zh/model-studio/get-api-key/" target="_blank" rel="noopener">获取与配置百炼 API Key</a>。</li>
+      <li>进入<a href="https://bailian.console.aliyun.com/?tab=model" target="_blank" rel="noopener">阿里云百炼控制台</a>，选择业务空间并创建 API Key。</li>
+      <li>确认 API Key 所属地域、业务空间和计费方案。</li>
+      <li>从<a href="https://help.aliyun.com/zh/model-studio/base-url" target="_blank" rel="noopener">百炼 Base URL 总览</a>选择与 API Key 匹配的地址。</li>
+    </ol>
+    <p>中国大陆按量付费的简单配置：</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>InkTalk 字段</th><th>建议值</th></tr></thead>
+        <tbody>
+          <tr><td>Base URL</td><td><code>https://dashscope.aliyuncs.com/compatible-mode/v1</code></td></tr>
+          <tr><td>API Key</td><td>百炼中国大陆版 API Key</td></tr>
+          <tr><td>模型</td><td><code>qwen-plus</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>生产环境可以使用业务空间专属地址：</p>
+    <p><code>https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com/compatible-mode/v1</code></p>
+    <p>将 <code>{WorkspaceId}</code> 替换为控制台显示的业务空间 ID。API Key、地域、业务空间和 Base URL 必须配套，否则通常返回 HTTP 401。</p>
+    <div class="warn">Token Plan 和 Coding Plan 的专属 Key 仅适用于对应的交互式 AI 工具，不应当作为 InkTalk 的通用模型服务 Key。InkTalk 应使用允许应用调用的按量付费或业务空间 API Key。</div>
+
+    <h3>5. 火山方舟豆包大模型</h3>
+    <p>获取步骤：</p>
+    <ol class="plain">
+      <li>登录<a href="https://console.volcengine.com/ark/region:ark+cn-beijing/overview" target="_blank" rel="noopener">火山方舟控制台</a>。</li>
+      <li>在模型列表或体验中心选择支持 Chat API 的模型，并记录模型 ID。</li>
+      <li>在<a href="https://console.volcengine.com/ark/region:ark+cn-beijing/apikey" target="_blank" rel="noopener">火山方舟 API Key 管理</a>创建 API Key。</li>
+      <li>参考<a href="https://docs.volcengine.com/docs/82379/1795150" target="_blank" rel="noopener">火山方舟开始使用</a>和 <a href="https://api.volcengine.com/api-docs/view?action=ChatCompletions&serviceCode=ark&version=2024-01-01" target="_blank" rel="noopener">ChatCompletions API</a>确认模型 ID 与接口。</li>
+    </ol>
+    <p>InkTalk 配置示例：</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>InkTalk 字段</th><th>示例值</th></tr></thead>
+        <tbody>
+          <tr><td>Base URL</td><td><code>https://ark.cn-beijing.volces.com/api/v3</code></td></tr>
+          <tr><td>API Key</td><td>火山方舟 API Key</td></tr>
+          <tr><td>模型</td><td><code>doubao-seed-2-0-lite-260215</code>，或控制台当前显示的其他 Chat 模型 ID</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">火山方舟 API Key 与豆包语音 API Key 属于不同产品。语音识别区域必须填写豆包语音凭据；AI 文本处理区域才填写火山方舟凭据。</div>
+
+    <h3>6. DeepSeek API</h3>
+    <p>获取步骤：</p>
+    <ol class="plain">
+      <li>登录 <a href="https://platform.deepseek.com/" target="_blank" rel="noopener">DeepSeek Platform</a>。</li>
+      <li>在 <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">API Keys</a> 页面创建密钥。</li>
+      <li>根据平台要求充值或确认可用余额。</li>
+      <li>参考 <a href="https://api-docs.deepseek.com/" target="_blank" rel="noopener">DeepSeek API Quick Start</a> 选择当前模型。</li>
+    </ol>
+    <p>InkTalk 配置示例：</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>InkTalk 字段</th><th>建议值</th></tr></thead>
+        <tbody>
+          <tr><td>Base URL</td><td><code>https://api.deepseek.com</code></td></tr>
+          <tr><td>API Key</td><td>DeepSeek Platform API Key</td></tr>
+          <tr><td>模型</td><td><code>deepseek-v4-flash</code> 或 <code>deepseek-v4-pro</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn">DeepSeek 当前官方文档使用 <code>deepseek-v4-flash</code> 和 <code>deepseek-v4-pro</code>。不要继续照抄旧文档中的 <code>deepseek-chat</code> 或 <code>deepseek-reasoner</code>，应以控制台和当前 Quick Start 为准。</div>
+
+    <h3>7. 关闭思考模式开关</h3>
+    <p>InkTalk 的「关闭思考模式」会同时发送多种兼容字段：</p>
+    <ul>
+      <li><code>enable_thinking=false</code></li>
+      <li><code>thinking={"type":"disabled"}</code></li>
+      <li><code>reasoning_effort="minimal"</code></li>
+    </ul>
+    <div class="note">这些字段分别面向不同提供方，并非所有服务都接受未知参数。初次配置时建议关闭此开关。只有确认提供方兼容后再开启；若返回 HTTP 400 或「unknown field」，应关闭开关并重新测试。</div>
+
+    <h3>8. 常见 AI 错误</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>现象</th><th>常见原因</th><th>处理方式</th></tr></thead>
+        <tbody>
+          <tr><td>HTTP 401</td><td>API Key 错误；Key 与地域或 Base URL 不匹配</td><td>重新复制 Key，并核对地域、业务空间和计费方案</td></tr>
+          <tr><td>HTTP 403</td><td>模型未授权；账号无权限；余额或服务状态异常</td><td>在提供方控制台开通模型并检查权限</td></tr>
+          <tr><td>HTTP 404</td><td>Base URL 多填或少填版本路径；模型 ID 不存在</td><td>Base URL 不要包含 <code>/chat/completions</code>，重新复制模型 ID</td></tr>
+          <tr><td>HTTP 400</td><td>模型不支持 Chat Completions；关闭思考模式附加字段不兼容</td><td>更换 Chat 模型，或关闭「关闭思考模式」</td></tr>
+          <tr><td>解析响应失败</td><td>提供方响应不是 <code>choices[0].message.content</code> 结构</td><td>使用真正兼容 OpenAI Chat Completions 的接口</td></tr>
+          <tr><td>请求超时</td><td>网络不可达；模型响应超过 InkTalk 的 60 秒读取超时</td><td>检查网络，或改用响应更快的模型</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="content-block" id="handwriting">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">可选</div>
+      <h2>三、Google ML Kit 手写识别</h2>
+    </div>
+    <p>InkTalk 的中英文手写识别使用 Google ML Kit Digital Ink Recognition 19.0.0。该功能不需要申请 API Key，也不需要填写 Base URL。</p>
+    <p>首次选择某种手写语言时，InkTalk 会按需下载对应的语言模型。根据 <a href="https://developers.google.com/ml-kit/vision/digital-ink-recognition/android" target="_blank" rel="noopener">Google ML Kit Digital Ink Recognition 官方文档</a>，每种语言模型大约需要 20 MB 存储空间。</p>
+    <p>使用要求：</p>
+    <ul>
+      <li>首次下载模型时需要网络连接。</li>
+      <li>设备需要能够访问 Google 提供的模型下载服务。</li>
+      <li>模型下载完成后，识别过程在设备上执行，不需要用户提供云端 API Key。</li>
+      <li>中文和英文模型分别下载；切换语言时可能触发新的下载。</li>
+    </ul>
+    <div class="note">若手写页面一直显示准备模型或下载失败，应检查网络、设备存储空间、Google 模型下载服务可达性和系统对后台下载的限制。</div>
+  </div>
+</section>
+
+<section class="content-block" id="security">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">安全</div>
+      <h2>四、密钥保存与备份安全</h2>
+    </div>
+    <p>InkTalk 将凭据保存到应用私有的 SharedPreferences，但「配置导出」文件会包含语音识别和 AI 服务密钥。</p>
+    <ul>
+      <li>不要把导出的 JSON 文件发送到聊天群、公开仓库或工单附件。</li>
+      <li>更换手机后导入配置，应在确认成功后删除外部存储中的明文备份。</li>
+      <li>手机丢失、备份泄露或怀疑 Key 被复制时，应立即在对应服务控制台撤销并重建 Key。</li>
+      <li>API Key 通常关联计费账户。建议在服务商控制台设置预算、额度和模型范围。移动网络 IP 经常变化，配置 IP 白名单前应确认不会阻断手机访问。</li>
+      <li>面向多人或公开发布时，不应继续在客户端保存长期有效的生产密钥，应改用服务端代理和短期凭据。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="content-block" id="checklist">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">自检</div>
+      <h2>五、完整配置检查表</h2>
+    </div>
+
+    <h4>只使用语音输入</h4>
+    <ul class="checklist">
+      <li>已开通豆包流式语音识别。</li>
+      <li>已获取豆包语音 API Key，或旧版 App ID 与 Access Token。</li>
+      <li>InkTalk 资源 ID 与控制台开通项一致。</li>
+      <li>「测试语音识别连接」成功。</li>
+      <li>已授予录音权限，并在真实输入框完成录音测试。</li>
+    </ul>
+
+    <h4>使用 AI 文本处理与自由语音指令</h4>
+    <ul class="checklist">
+      <li>已选择兼容 OpenAI Chat Completions 的提供方。</li>
+      <li>Base URL 不包含 <code>/chat/completions</code>。</li>
+      <li>API Key、地域、计费方案和 Base URL 相互匹配。</li>
+      <li>模型 ID 支持 Chat Completions。</li>
+      <li>「测试 AI 连接」成功。</li>
+      <li>已了解文本会发送到所选第三方模型服务，并接受对应服务的隐私与计费条款。</li>
+    </ul>
+
+    <h4>使用手写识别</h4>
+    <ul class="checklist">
+      <li>不需要申请 API Key。</li>
+      <li>首次使用时保持网络可用。</li>
+      <li>为每个需要的语言模型预留约 20 MB 存储空间。</li>
+      <li>等待模型下载完成后再开始书写。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="content-block" id="excluded">
+  <div class="wrap content">
+    <div class="sec-head">
+      <div class="kicker">避免混淆</div>
+      <h2>六、InkTalk 不使用的凭据</h2>
+    </div>
+    <p>以下内容不应填写到 InkTalk 的 API Key 字段：</p>
+    <ul>
+      <li>ChatGPT 登录密码、ChatGPT 会话 Cookie 或 ChatGPT 订阅信息。</li>
+      <li>阿里云账号登录密码、火山引擎账号登录密码。</li>
+      <li>Google 账号密码或 Google Cloud 服务账号密钥。</li>
+      <li>Android 输入法授权码、短信验证码或手机解锁密码。</li>
+    </ul>
+    <div class="warn">InkTalk 不会要求上传这些信息。设置页只需要对应服务商正式创建的 API Key、旧版语音凭据和模型配置。</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>InkTalk · 纯语音 Android 输入法</span>
+    <span><a href="index.html">返回首页</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
