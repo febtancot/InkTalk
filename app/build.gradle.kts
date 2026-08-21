@@ -10,8 +10,8 @@ android {
         applicationId = "com.inktalk.ime"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 9
+        versionName = "0.5.2"
     }
 
     buildTypes {
@@ -32,4 +32,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.google.mlkit:digital-ink-recognition:19.0.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

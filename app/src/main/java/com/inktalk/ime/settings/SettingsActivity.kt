@@ -2,6 +2,7 @@ package com.inktalk.ime.settings
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -27,6 +28,8 @@ import com.inktalk.ime.asr.AsrStartConfirmation
 import com.inktalk.ime.asr.SaucProtocol
 import com.inktalk.ime.asr.SpeechInputMode
 import com.inktalk.ime.asr.VolcAsrClient
+import com.inktalk.ime.update.UpdateManager
+import okhttp3.Call
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** 设置页：引导启用输入法、配置火山引擎凭据与 AI 服务。 */
@@ -35,6 +38,7 @@ class SettingsActivity : Activity() {
     private val main = Handler(Looper.getMainLooper())
     private lateinit var textStatus: TextView
     private lateinit var settingsScroll: ScrollView
+    private var updateCall: Call? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,6 +83,7 @@ class SettingsActivity : Activity() {
                 REQ_BACKUP_SETTINGS,
             )
         }
+        findViewById<Button>(R.id.btnCheckUpdate).setSystemHapticClick { checkForUpdate() }
         loadPrefs()
 
         findViewById<View>(R.id.btnSave).setSystemHapticClick {
@@ -93,6 +98,49 @@ class SettingsActivity : Activity() {
             savePrefs()
             testAi()
         }
+    }
+
+    override fun onDestroy() {
+        updateCall?.cancel()
+        super.onDestroy()
+    }
+
+    private fun checkForUpdate() {
+        showStatus(getString(R.string.update_checking))
+        updateCall?.cancel()
+        updateCall = UpdateManager.check(this) { result ->
+            updateCall = null
+            if (isFinishing || isDestroyed) return@check
+            when (result) {
+                UpdateManager.CheckResult.UpToDate -> showStatus(getString(R.string.update_up_to_date))
+                is UpdateManager.CheckResult.Failed -> showStatus(getString(R.string.update_failed, result.message))
+                is UpdateManager.CheckResult.Available -> showUpdateDialog(result.manifest)
+            }
+        }
+    }
+
+    private fun showUpdateDialog(manifest: com.inktalk.ime.update.UpdateManifest) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.update_available_title, manifest.versionName))
+            .setMessage(manifest.releaseNotes.ifBlank { getString(R.string.settings_update_description) })
+            .setNegativeButton(R.string.update_later, null)
+            .setPositiveButton(R.string.update_download) { _, _ ->
+                if (!UpdateManager.canInstallPackages(this)) {
+                    showStatus(getString(R.string.update_install_permission))
+                    try { UpdateManager.openInstallPermission(this) }
+                    catch (error: RuntimeException) {
+                        showStatus(getString(R.string.update_failed, error.safeMessage()))
+                    }
+                } else {
+                    try {
+                        UpdateManager.enqueueDownload(this, manifest)
+                        showStatus(getString(R.string.update_download_started))
+                    } catch (error: RuntimeException) {
+                        showStatus(getString(R.string.update_failed, error.safeMessage()))
+                    }
+                }
+            }
+            .show()
     }
 
     override fun onRequestPermissionsResult(

@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InkTalk — 开口即文字的 Android 语音输入法</title>
-<meta name="description" content="InkTalk 是一款开源免费的纯语音 Android 输入法：按住即说、实时上屏，基于火山引擎豆包流式语音识别大模型 2.0，支持中英混合识别、自由语音指令、手写输入，并可接入任意 OpenAI 兼容大模型完成总结、翻译与整理。">
-<meta name="keywords" content="InkTalk, Android voice input, 语音输入法, 语音转文字, speech-to-text, Android IME, 实时语音识别, AI writing, 豆包语音识别, Volcengine ASR, OpenAI, 中英混合识别, 手写输入法, voice keyboard, 开源输入法">
-<meta name="author" content="InkTalk">
-<meta property="og:title" content="InkTalk — 开口即文字的 Android 语音输入法">
-<meta property="og:description" content="纯语音驱动、实时上屏、AI 指令改稿的开源 Android 输入法。基于豆包流式语音识别大模型 2.0，支持中英混合与手写输入。">
+<title>inktalk — 开口即文字的 Android 语音输入法</title>
+<meta name="description" content="inktalk 是一款开源免费的语音优先 Android 输入法：点击即说、实时上屏，支持中英混合识别、自由语音指令、手写输入和轻量数字键盘。">
+<meta name="keywords" content="inktalk, Android voice input, 语音输入法, 语音转文字, speech-to-text, Android IME, 实时语音识别, AI writing, 豆包语音识别, Volcengine ASR, OpenAI, 中英混合识别, 手写输入法, voice keyboard, 开源输入法">
+<meta name="author" content="inktalk">
+<meta property="og:title" content="inktalk — 开口即文字的 Android 语音输入法">
+<meta property="og:description" content="语音优先、实时上屏、AI 指令改稿的开源 Android 输入法，支持中英混合、手写输入和轻量数字键盘。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://inktalk.liveby.app">
 <meta property="og:image" content="https://inktalk.liveby.app/assets/icon.png">
@@ -217,8 +217,8 @@
 
 <nav>
   <div class="wrap">
-    <img src="assets/icon.png" alt="InkTalk 图标">
-    <a class="brand" href="#top">InkTalk</a>
+    <img src="assets/icon.png" alt="inktalk 图标">
+    <a class="brand" href="#top">inktalk</a>
     <div class="links">
       <a href="#philosophy">理念</a>
       <a href="#features">功能</a>
@@ -227,7 +227,7 @@
       <a href="config-guide.html">配置指南</a>
       <a href="#privacy">隐私</a>
       <a href="#download">下载</a>
-      <a href="https://github.com/febtancot/InkTalk" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/febtancot/inktalk" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
 </nav>
@@ -238,9 +238,9 @@
       <span class="badge">Android 语音输入法</span>
       <h1>按住说话，<br><em>文字实时上屏</em>。</h1>
       <p class="lead">
-        InkTalk 是一款以语音为核心的 Android 输入法，基于火山引擎「豆包流式语音识别大模型 2.0」，
-        支持中英混合识别、自由语音指令、手写输入，并可接入任意 OpenAI 兼容大模型完成总结、翻译与整理。
-        <strong style="color:var(--ink-soft)">它没有键盘——我们取消键盘，就是希望让你纯粹地享受语音输入带来的高效。</strong>
+        inktalk 是一款以语音为核心的 Android 输入法，基于火山引擎「豆包流式语音识别大模型 2.0」，
+        支持中英混合识别、自由语音指令、手写输入和轻量数字键盘，并可接入任意 OpenAI 兼容大模型完成总结、翻译与整理。
+        <strong style="color:var(--ink-soft)">它不内置完整字母键盘，让语音负责连续表达，数字键盘负责快速录入数字。</strong>
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="#download">下载 APK</a>
@@ -252,7 +252,7 @@
     <div class="kbd-demo" aria-hidden="true">
       <div class="kbd-toolbar"><span class="dot"></span>正在聆听，点击结束</div>
       <div class="kbd-modes">
-        <span class="on">中英混合</span><span>123</span><span>English</span>
+        <span class="on">中英混合</span>
       </div>
       <div class="kbd-stage">
         <div class="kbd-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -262,7 +262,7 @@
         <div class="kbd-hint">点击麦克风开始说话</div>
       </div>
       <div class="kbd-actions">
-        <span>✦ 指令</span><span>总结</span><span>翻译</span><span>整理</span><span>⌘ 快捷键</span><span>手写</span>
+        <span>✦ 指令</span><span>总结</span><span>翻译</span><span>整理</span><span>⌘ 快捷键</span><span>手写</span><span>数字键盘</span>
       </div>
     </div>
   </div>
@@ -272,8 +272,8 @@
   <div class="wrap">
     <div class="sec-head">
       <div class="kicker">设计理念</div>
-      <h2>没有键盘，是刻意的</h2>
-      <p>取消键盘不是做减法，而是把「说、写、改、理」四件事交给最合适的方式：语音负责速度，手写负责精度，指令负责改写，每日整理负责回顾。它们彼此配合，构成一条完整的输入闭环。</p>
+      <h2>不内置完整字母键盘，是刻意的</h2>
+      <p>语音负责连续表达，数字键盘负责快速录入数字，手写负责局部精修，指令负责改写，每日整理负责回顾。它们彼此配合，构成一条完整的输入闭环。</p>
     </div>
     <div class="loop">
       <div class="card loop-step">
@@ -297,7 +297,7 @@
       <div class="card loop-step">
         <div class="loop-num">④</div>
         <h3>每日整理</h3>
-        <p>一键梳理当日全部语音、手写与指令输入，AI 生成当日摘要——<strong>高效回顾一天输入内容的最佳方案</strong>，也是 InkTalk 最大的特点之一。</p>
+        <p>一键梳理当日全部语音、手写与指令输入，AI 生成当日摘要——<strong>高效回顾一天输入内容的最佳方案</strong>，也是 inktalk 最大的特点之一。</p>
       </div>
     </div>
   </div>
@@ -308,7 +308,7 @@
     <div class="sec-head">
       <div class="kicker">功能</div>
       <h2>一块键盘，覆盖从听写到成稿</h2>
-      <p>语音是主线，AI 与手写是补充。所有功能都在输入法面板内完成，不需要离开当前应用。</p>
+      <p>语音是主线，AI、手写与数字键盘是补充。所有功能都在输入法面板内完成，不需要离开当前应用。</p>
     </div>
     <div class="grid">
       <div class="card">
@@ -318,8 +318,8 @@
       </div>
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 9h-3.02a15.7 15.7 0 0 0-1.2-5.02A8.02 8.02 0 0 1 19.93 11zM12 4.06c.62.86 1.6 2.8 1.9 4.94h-3.8c.3-2.14 1.28-4.08 1.9-4.94zM4.07 13h3.02c.14 1.94.58 3.64 1.2 5.02A8.02 8.02 0 0 1 4.07 13zm3.02-2H4.07a8.02 8.02 0 0 1 4.22-5.02A15.7 15.7 0 0 0 7.09 11zm2.81 2h4.2c-.3 2.14-1.28 4.08-1.9 4.94-.62-.86-1.6-2.8-1.9-4.94zm1.61 5.02c.62-1.38 1.06-3.08 1.2-5.02h3.02a8.02 8.02 0 0 1-4.22 5.02z"/></svg></div>
-        <h3>四种输入模式</h3>
-        <p>中文、实时中英混合、数字口述（自动规整为阿拉伯数字）、英文优先定稿（en-US），一键切换，随说随换。</p>
+        <h3>中英语音识别</h3>
+        <p>支持实时中英混合识别；需要英文优先时，可切换到使用 en-US 偏好的定稿模式。数字通过独立数字键盘直接输入。</p>
       </div>
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l1.9 5.7 6.1.4-4.8 3.8 1.7 6L12 14.3 7.1 17.9l1.7-6L4 8.1l6.1-.4z"/></svg></div>
@@ -337,6 +337,11 @@
         <p>基于 ML Kit 数字墨迹识别，支持简体中文与英文，模型按语言下载后离线可用。与语音配合，是局部修改的最佳方案：手写定位，语音改法。</p>
       </div>
       <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h3v3H6V3zm5 0h3v3h-3V3zm5 0h3v3h-3V3zM6 8h3v3H6V8zm5 0h3v3h-3V8zm5 0h3v3h-3V8zM6 13h3v3H6v-3zm5 0h3v3h-3v-3zm5 0h3v3h-3v-3zm5 5h-8v3h8v-3z"/></svg></div>
+        <h3>轻量数字键盘</h3>
+        <p>直接输入数字、小数点、正负号、日期和时间，不必逐个口述；点击麦克风即可返回语音输入。</p>
+      </div>
+      <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm2 3v2h2V8H6zm0 4v2h2v-2H6zm4-4v2h2V8h-2zm0 4v2h2v-2h-2zm4-4v2h2V8h-2zm0 4v2h2v-2h-2z"/></svg></div>
         <h3>⌘ 快捷键面板</h3>
         <p>ESC、Tab、全选、复制、粘贴、撤销（Ctrl+Z）与方向键，5×2 等宽网格，横向滑动切换，编辑长文不求人。</p>
@@ -344,7 +349,12 @@
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3zm1 4h-2v6l5 3 1-1.73-4-2.37V7z"/></svg></div>
         <h3>每日输入记录 · 当日整理</h3>
-        <p>语音、手写、指令与 AI 结果按日期归档在本机，一键「整理当日内容」即可让 AI 生成当日摘要——高效梳理一天所有输入，InkTalk 最大的特点之一。</p>
+        <p>语音、数字键盘、手写、指令与 AI 结果按日期归档在本机。每条记录可逐字选择热词；当日整理还会生成待确认候选，不会自动修改热词表。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v3H4V4zm0 5h10v3H4V9zm0 5h8v3H4v-3zm12-2 2 2 4-4 1.5 1.5L18 17l-3.5-3.5L16 12z"/></svg></div>
+        <h3>自适应热词与纠错候选</h3>
+        <p>从每日记录逐字选择热词；已验证的删除与后续输入会形成可能纠错。所有自动候选都需要确认，用户热词优先进入 ASR 请求。</p>
       </div>
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 0 0-2 2v16l7-4 7 4V5a2 2 0 0 0-2-2z"/></svg></div>
@@ -355,6 +365,11 @@
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M7 7h10v2l3-3-3-3v2H5v6h2V7zm10 10H7v-2l-3 3 3 3v-2h12v-6h-2v4z"/></svg></div>
         <h3>配置导入导出</h3>
         <p>语音识别、AI 与输入模式配置可导出为 JSON 备份、换机导入，单文件上限 128 KB，导出前提示敏感凭据风险。</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+        <h3>安全在线更新</h3>
+        <p>检查官网版本清单，下载后校验 SHA-256、包名和签名证书；校验通过后仍由 Android 系统显示安装确认。</p>
       </div>
     </div>
   </div>
@@ -391,9 +406,9 @@
       <p>需要火山引擎「豆包流式语音识别大模型 2.0」凭据（按音频时长计费）；AI 功能为可选项。</p>
     </div>
     <ol class="steps">
-      <li><strong>三步引导</strong><span>安装后打开设置页，依次完成：启用 InkTalk 输入法 → 切换到 InkTalk → 授予录音权限。</span></li>
+      <li><strong>三步引导</strong><span>安装后打开设置页，依次完成：启用 inktalk 输入法 → 切换到 inktalk → 授予录音权限。</span></li>
       <li><strong>填入凭据</strong><span>新版控制台只需填 API Key；旧版控制台填 App ID + Access Token。点「测试 ASR 连接」，成功会返回 logid。详细获取步骤见<a href="config-guide.html">配置指南</a>。</span></li>
-      <li><strong>开始使用</strong><span>在任意输入框唤出 InkTalk，选好模式后点大麦克风说话，再点一次结束上屏。需要改稿时点 ✦ 说出指令，预览确认后替换。</span></li>
+      <li><strong>开始使用</strong><span>在任意输入框唤出 inktalk，选好模式后点大麦克风说话，再点一次结束上屏。需要改稿时点 ✦ 说出指令，预览确认后替换。</span></li>
     </ol>
     <div class="build-cmd"><span class="c"># 自行构建（需要 JDK 17+ 与 Android SDK，compileSdk 37 / minSdk 26）</span>
 ./gradlew :app:assembleDebug
@@ -451,11 +466,11 @@
 
 <section id="download">
   <div class="wrap download">
-    <img src="assets/icon.png" alt="InkTalk 图标" style="width:76px;height:76px;border-radius:18px;margin-bottom:20px;box-shadow:0 10px 26px rgba(48,42,37,.18);">
+    <img src="assets/icon.png" alt="inktalk 图标" style="width:76px;height:76px;border-radius:18px;margin-bottom:20px;box-shadow:0 10px 26px rgba(48,42,37,.18);">
     <h2>让说话的速度，成为打字的速度</h2>
-    <p>InkTalk 为个人项目，可自行构建 APK 安装使用。接入需自备火山引擎语音识别凭据；AI 功能支持任意 OpenAI 兼容服务。</p>
+    <p>inktalk 为个人项目，可自行构建 APK 安装使用。接入需自备火山引擎语音识别凭据；AI 功能支持任意 OpenAI 兼容服务。</p>
     <div class="cta" style="justify-content:center;display:flex;gap:14px;flex-wrap:wrap;">
-      <a class="btn btn-primary" href="https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.3-release.apk" download>下载 APK（v0.3 · 33 MB）</a>
+      <a class="btn btn-primary" href="https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk" download>下载 inktalk（v0.4.2 · 33 MB）</a>
       <a class="btn btn-ghost" href="#start">查看快速开始</a>
     </div>
   </div>
@@ -473,7 +488,7 @@
         <div style="margin-top: 8px; font-size: 13.5px; color: var(--ink-muted);">—— <a href="https://x.com/taresky/status/2088553714894393390?s=20" target="_blank" rel="noopener">@taresky 的 X 帖子</a></div>
       </blockquote>
       <p style="font-size: 14.5px;">
-        InkTalk 的开发正是受到这条帖子内容的启发：语音识别负责输入，AI 结合上下文完成总结与回复。
+        inktalk 的开发正是受到这条帖子内容的启发：语音识别负责输入，AI 结合上下文完成总结与回复。
         我们把这个想法做成了一款完整的输入法，并将开发结果<strong style="color: var(--accent);">免费提供给有类似需求的用户</strong>——凭据自备，代码自行构建即可使用。
       </p>
     </div>
@@ -482,7 +497,7 @@
 
 <footer>
   <div class="wrap">
-    <span>InkTalk · 纯语音 Android 输入法 · <a href="https://github.com/febtancot/InkTalk">GitHub</a> · MIT License</span>
+    <span>inktalk · 纯语音 Android 输入法 · <a href="https://github.com/febtancot/inktalk">GitHub</a> · MIT License</span>
     <span>语音识别：火山引擎 豆包流式语音识别大模型 2.0 · AI：OpenAI 兼容接口 · 手写：ML Kit 数字墨迹识别</span>
   </div>
 </footer>

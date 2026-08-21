@@ -1,21 +1,21 @@
 <div align="center">
-  <img src="website/assets/icon.png" width="96" height="96" alt="InkTalk Logo">
-  <h1>InkTalk</h1>
+  <img src="website/assets/icon.png" width="96" height="96" alt="inktalk Logo">
+  <h1>inktalk</h1>
   <p><strong>开口即文字的 Android 语音输入法</strong></p>
   <p>Voice-first Android IME — speak and see text appear in real time</p>
 
   [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   [![Android](https://img.shields.io/badge/platform-Android%2026%2B-green.svg)](https://developer.android.com)
-  [![Version](https://img.shields.io/badge/version-0.3-orange.svg)](https://github.com/febtancot/InkTalk/releases)
+  [![Version](https://img.shields.io/badge/version-0.4.2-orange.svg)](https://github.com/febtancot/InkTalk/releases)
 
-  [🌐 官网 Website](https://inktalk.cc) · [📖 配置指南](https://inktalk.cc/config-guide.html) · [⬇️ 下载 APK](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.3-release.apk)
+  [🌐 官网 Website](https://inktalk.liveby.app) · [📖 配置指南](https://inktalk.liveby.app/config-guide.html) · [⬇️ 下载 APK](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk)
 </div>
 
 ---
 
-InkTalk 是一款**纯语音驱动**的 Android 输入法。按住即说、实时上屏，基于火山引擎「豆包流式语音识别大模型 2.0」，并可接入任意 OpenAI 兼容大模型完成自由语音指令、总结、翻译与整理。
+InkTalk 是一款**语音优先**的 Android 输入法。点击即说、实时上屏，基于火山引擎「豆包流式语音识别大模型 2.0」，并提供手写与轻量数字键盘；还可接入任意 OpenAI 兼容大模型完成自由语音指令、总结、翻译与整理。
 
-> **没有键盘，是刻意的** —— 语音负责速度，手写负责精度，指令负责改写，每日整理负责回顾。
+> **不内置完整字母键盘，是刻意的** —— 语音负责连续表达，数字键盘负责快速录入数字，手写负责局部精修，指令负责改写，每日整理负责回顾。
 
 ### 为什么选择 InkTalk？
 
@@ -23,12 +23,19 @@ InkTalk 是一款**纯语音驱动**的 Android 输入法。按住即说、实�
 - ⚡ **200ms 低延迟实时上屏** — 双向流式识别，边说边出字
 - 🧠 **内置 AI Chat 入口** — 语音指令改稿、总结、翻译，不离开当前应用
 - ✍️ **手写精修搭档** — 语音 + 手写组合，局部修改的最佳方案
+- 🔢 **轻量数字键盘** — 数字、小数、正负号、日期和时间无需逐个口述
 - 📋 **每日输入整理** — AI 自动生成当日输入摘要，高效回顾
+- 🔥 **自适应热词** — 从每日记录逐字选择热词，并审核自动候选与可能纠错
 - 🔒 **隐私安全** — 凭据只存本机，代码完全开源（MIT 协议）
 
 ## 功能亮点
 
-- 🎤 **中英混合与英文优先**：设置为“实时中英混合”时，键盘显示“中英混合 / 123”，中英文共用 `bigmodel_async`；设置为“英文优先定稿”时，显示“中文 / 123 / English”，English 使用 `bigmodel_nostream + en-US`。数字口述会规范为阿拉伯数字。
+- 🎤 **中英混合与英文优先**：设置为“实时中英混合”时，中英文共用 `bigmodel_async`；设置为“英文优先定稿”时，可在中文与 English 间切换，English 使用 `bigmodel_nostream + en-US`。
+- 🔢 **数字键盘**：点击麦克风左侧的拨号盘图标，直接输入 `0–9`、`00`、小数点、正负号、冒号和斜杠；点击麦克风即可返回语音输入。语音模式栏不再提供“123”数字语音模式。
+- 🔥 **每日热词与纠错候选**：每条原始记录可按字展开，支持选择一个或多个片段并加入热词；当日整理会生成待确认候选。InkTalk 还会记录可验证的删除与后续输入，将短文本变化显示为可能纠错，用户确认后才加入。
+- 🚀 **用户热词优先**：用户确认的热词优先占用 ASR 热词预算，内置词使用剩余预算；已有自定义词表和主动清空状态保持不变。
+- ⬇️ **安全在线更新**：设置页可检查官网更新清单；APK 下载后必须通过 SHA-256、包名和当前签名证书校验，再交由 Android 系统确认安装。
+- ⌨️ **常用编辑键**：工具栏在回车后提供空格键；设置入口位于键盘右下角。
 - ⚡ **低延迟**：使用官方推荐的双向流式优化版端点（bigmodel_async），200 ms 音频分包，结果变化才下发。
 - ☀️ **识别期间常亮**：从连接开始到最终结果返回期间阻止系统因无操作自动息屏；会话结束后恢复系统策略。
 - 🧠 **AI 文本处理**：优先对编辑框中当前选中的文本执行总结 / 中英互译 / 整理；没有选中文本时处理本次语音内容。接入任意 OpenAI 兼容 API，可选择追加结果或直接替换原文。
@@ -74,7 +81,7 @@ InkTalk 是一款**纯语音驱动**的 Android 输入法。按住即说、实�
 2. 按「快速开始」三步走：启用输入法 → 切换到 InkTalk → 授予录音权限。
 3. 填入 API Key（或旧版的 App ID + Access Token），点「测试 ASR 连接」验证握手和首包协议（成功后显示 logid）。
 4. 如需调整内置词表，在「词表与数据 → 编辑热词」中逐行编辑并保存。
-5. 在任意输入框唤出 InkTalk，先选中文、123 或 English，再点大麦克风开始说话；再次点击结束。
+5. 在任意输入框唤出 InkTalk，选择中文或 English 后，点击大麦克风开始说话；再次点击结束。需要快速输入数字时，点击麦克风左侧的拨号盘图标。
 6. 使用自由指令时，先按需选中文字，再点“指令”并说出修改要求。无选区的非空文本框会进入全文修改，空文本框会在光标处生成；检查预览后点“替换”。
 
 ## 已知限制
@@ -110,9 +117,9 @@ app/src/main/java/com/inktalk/ime/
 
 | 资源 | 链接 |
 |------|------|
-| 官网 | https://inktalk.cc |
-| 配置指南 | https://inktalk.cc/config-guide.html |
-| APK 下载 | [InkTalk v0.3](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.3-release.apk) |
+| 官网 | https://inktalk.liveby.app |
+| 配置指南 | https://inktalk.liveby.app/config-guide.html |
+| APK 下载 | [inktalk v0.4.2](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk) |
 | 产品发布说明 | [InkTalk 0.2.0 产品发布说明](output/InkTalk-0.2.0-产品发布说明.md) |
 | API 配置指南 | [API 配置与获取指南](output/InkTalk-API-配置与获取指南.md) |
 

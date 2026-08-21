@@ -13,7 +13,7 @@ object AsrRequestPayload {
         englishRecognitionStrategy: EnglishRecognitionStrategy,
         usesLanguageSpecificEndpoint: Boolean,
     ): String {
-        val hotwords = HotwordCatalog.forRequest(Prefs.hotwords(context))
+        val hotwords = Prefs.requestHotwords(context)
         val appVersion = try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown"
         } catch (_: Exception) {
@@ -38,22 +38,10 @@ object AsrRequestPayload {
         root.put("audio", audio)
 
         val request = JSONObject()
-            .put(
-                "enable_punc",
-                inputMode != SpeechInputMode.NUMBER &&
-                    Prefs.getBool(context, Prefs.KEY_ENABLE_PUNC, true),
-            )
+            .put("enable_punc", Prefs.getBool(context, Prefs.KEY_ENABLE_PUNC, true))
             .put("model_name", "bigmodel")
-            .put(
-                "enable_itn",
-                inputMode == SpeechInputMode.NUMBER ||
-                    Prefs.getBool(context, Prefs.KEY_ENABLE_ITN, true),
-            )
-            .put(
-                "enable_ddc",
-                inputMode != SpeechInputMode.NUMBER &&
-                    Prefs.getBool(context, Prefs.KEY_ENABLE_DDC, false),
-            )
+            .put("enable_itn", Prefs.getBool(context, Prefs.KEY_ENABLE_ITN, true))
+            .put("enable_ddc", Prefs.getBool(context, Prefs.KEY_ENABLE_DDC, false))
             .put("show_utterances", true)
             .put("result_type", "single")
             .put("end_window_size", 800)

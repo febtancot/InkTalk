@@ -4,11 +4,10 @@ package com.inktalk.ime.asr
  * 语音输入的识别目标。
  *
  * 双向流式接口原生支持中英文混合识别；英文模式可按用户设置选择实时中英混合，或切换
- * 到支持 en-US 偏好的流式输入接口。数字模式继续在本地只保留、规范化数字内容。
+ * 到支持 en-US 偏好的流式输入接口。数字内容由独立数字键盘直接写入。
  */
 enum class SpeechInputMode(val preferenceValue: String) {
     CHINESE("zh"),
-    NUMBER("number"),
     ENGLISH("en");
 
     fun usesLanguageSpecificEndpoint(strategy: EnglishRecognitionStrategy): Boolean =
@@ -24,18 +23,13 @@ enum class SpeechInputMode(val preferenceValue: String) {
             this
         }
 
-    fun transformResult(text: String): String = when (this) {
-        NUMBER -> NumericSpeechNormalizer.normalize(text)
-        CHINESE, ENGLISH -> text
-    }
-
     companion object {
         fun fromPreference(value: String?): SpeechInputMode =
             entries.firstOrNull { it.preferenceValue == value } ?: CHINESE
 
         fun visibleModes(strategy: EnglishRecognitionStrategy): List<SpeechInputMode> =
             if (strategy == EnglishRecognitionStrategy.REALTIME_BILINGUAL) {
-                listOf(CHINESE, NUMBER)
+                listOf(CHINESE)
             } else {
                 entries
             }

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="340dp"
+    android:baselineAligned="false"
     android:orientation="vertical"
     android:background="@color/panel_bg">
 
@@ -72,15 +74,15 @@
                 android:src="@drawable/ic_material_keyboard_return_24"
                 android:contentDescription="@string/a11y_enter" />
             <ImageButton
+                android:id="@+id/btnSpace"
+                style="@style/ToolbarIconButton"
+                android:src="@drawable/ic_material_space_bar_24"
+                android:contentDescription="@string/a11y_space" />
+            <ImageButton
                 android:id="@+id/btnSwitchKeyboard"
                 style="@style/ToolbarIconButton"
                 android:src="@drawable/ic_material_keyboard_24"
                 android:contentDescription="@string/a11y_switch_keyboard" />
-            <ImageButton
-                android:id="@+id/btnSettings"
-                style="@style/ToolbarIconButton"
-                android:src="@drawable/ic_material_settings_24"
-                android:contentDescription="@string/a11y_settings" />
         </LinearLayout>
     </LinearLayout>
 
@@ -114,10 +116,6 @@
                     android:id="@+id/btnModeChinese"
                     style="@style/InputModeButton"
                     android:text="@string/mode_chinese" />
-                <TextView
-                    android:id="@+id/btnModeNumber"
-                    style="@style/InputModeButton"
-                    android:text="@string/mode_number" />
                 <TextView
                     android:id="@+id/btnModeEnglish"
                     style="@style/InputModeButton"
@@ -166,6 +164,22 @@
                     android:paddingEnd="10dp"
                     android:visibility="gone">
 
+                    <HorizontalScrollView
+                        android:id="@+id/handwritingCandidateScroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginBottom="4dp"
+                        android:fillViewport="true"
+                        android:scrollbars="none"
+                        android:visibility="gone">
+                        <LinearLayout
+                            android:id="@+id/handwritingCandidates"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical" />
+                    </HorizontalScrollView>
+
                     <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
@@ -213,20 +227,46 @@
                             android:contentDescription="@string/a11y_clear_handwriting" />
                     </FrameLayout>
 
-                    <HorizontalScrollView
-                        android:id="@+id/handwritingCandidateScroll"
-                        android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:fillViewport="true"
-                        android:scrollbars="none"
-                        android:visibility="gone">
-                        <LinearLayout
-                            android:id="@+id/handwritingCandidates"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical" />
-                    </HorizontalScrollView>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/numericKeypadPanel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingStart="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="4dp"
+                    android:visibility="gone">
+
+                    <LinearLayout style="@style/NumericKeyRow">
+                        <TextView android:id="@+id/keyNumber7" style="@style/NumericKey" android:text="@string/numeric_key_7" />
+                        <TextView android:id="@+id/keyNumber8" style="@style/NumericKey" android:text="@string/numeric_key_8" />
+                        <TextView android:id="@+id/keyNumber9" style="@style/NumericKey" android:text="@string/numeric_key_9" />
+                        <TextView android:id="@+id/keyNumberSlash" style="@style/NumericKey" android:text="@string/numeric_key_slash" android:contentDescription="@string/a11y_numeric_key_slash" />
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/NumericKeyRow">
+                        <TextView android:id="@+id/keyNumber4" style="@style/NumericKey" android:text="@string/numeric_key_4" />
+                        <TextView android:id="@+id/keyNumber5" style="@style/NumericKey" android:text="@string/numeric_key_5" />
+                        <TextView android:id="@+id/keyNumber6" style="@style/NumericKey" android:text="@string/numeric_key_6" />
+                        <TextView android:id="@+id/keyNumberMinus" style="@style/NumericKey" android:text="@string/numeric_key_minus" android:contentDescription="@string/a11y_numeric_key_minus" />
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/NumericKeyRow">
+                        <TextView android:id="@+id/keyNumber1" style="@style/NumericKey" android:text="@string/numeric_key_1" />
+                        <TextView android:id="@+id/keyNumber2" style="@style/NumericKey" android:text="@string/numeric_key_2" />
+                        <TextView android:id="@+id/keyNumber3" style="@style/NumericKey" android:text="@string/numeric_key_3" />
+                        <TextView android:id="@+id/keyNumberColon" style="@style/NumericKey" android:text="@string/numeric_key_colon" android:contentDescription="@string/a11y_numeric_key_colon" />
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/NumericKeyRow">
+                        <TextView android:id="@+id/keyNumberDecimal" style="@style/NumericKey" android:text="@string/numeric_key_decimal" android:contentDescription="@string/a11y_numeric_key_decimal" />
+                        <TextView android:id="@+id/keyNumber0" style="@style/NumericKey" android:text="@string/numeric_key_0" />
+                        <TextView android:id="@+id/keyNumber00" style="@style/NumericKey" android:text="@string/numeric_key_00" />
+                        <TextView android:id="@+id/keyNumberPlus" style="@style/NumericKey" android:text="@string/numeric_key_plus" android:contentDescription="@string/a11y_numeric_key_plus" />
+                    </LinearLayout>
                 </LinearLayout>
             </FrameLayout>
 
@@ -262,7 +302,7 @@
                     android:layout_gravity="center"
                     android:clipChildren="false">
                     <FrameLayout
-                        android:layout_width="84dp"
+                        android:layout_width="124dp"
                         android:layout_height="44dp"
                         android:layout_gravity="start|center_vertical"
                         android:layout_marginStart="12dp"
@@ -289,6 +329,11 @@
                                 style="@style/VoicePurposeIconButton"
                                 android:src="@drawable/ic_material_draw_24"
                                 android:contentDescription="@string/a11y_enable_handwriting" />
+                            <ImageButton
+                                android:id="@+id/btnNumericKeypadMode"
+                                style="@style/VoicePurposeIconButton"
+                                android:src="@drawable/ic_material_dialpad_24"
+                                android:contentDescription="@string/a11y_enable_numeric_keypad" />
                         </LinearLayout>
                     </FrameLayout>
                     <ImageButton
@@ -312,7 +357,7 @@
                     android:orientation="horizontal"
                     android:gravity="center"
                     android:paddingStart="24dp"
-                    android:paddingEnd="24dp"
+                    android:paddingEnd="76dp"
                     android:visibility="gone">
                     <TextView
                         android:id="@+id/btnInstructionCancel"
@@ -327,6 +372,19 @@
                         style="@style/InstructionPrimaryAction"
                         android:text="@string/instruction_apply" />
                 </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnSettings"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="12dp"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_material_settings_24"
+                    android:tint="@color/icon_primary"
+                    android:background="@drawable/bg_icon_button"
+                    android:contentDescription="@string/a11y_settings"
+                    tools:ignore="UseAppTint" />
             </FrameLayout>
         </LinearLayout>
 

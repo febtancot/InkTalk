@@ -1,6 +1,7 @@
 package com.inktalk.ime
 
 import android.Manifest
+import android.content.res.ColorStateList
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -10,6 +11,7 @@ import android.os.Looper
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -19,6 +21,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.ImageButton
 import android.widget.HorizontalScrollView
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -36,12 +39,17 @@ import com.inktalk.ime.handwriting.HandwritingLanguage
 import com.inktalk.ime.handwriting.HandwritingRecognizer
 import com.inktalk.ime.history.InputHistoryStore
 import com.inktalk.ime.history.InputSource
+import com.inktalk.ime.history.CorrectionCandidateDetector
+import com.inktalk.ime.history.HotwordSelection
 import com.inktalk.ime.settings.Prefs
 import com.inktalk.ime.settings.SettingsActivity
 import com.inktalk.ime.ui.HandwritingPadView
+import com.inktalk.ime.ui.AdaptiveWindowProfile
 import com.inktalk.ime.ui.InputPanelSizing
 import com.inktalk.ime.ui.WaveformView
 import okhttp3.Call
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * InkTalk 语音输入法主服务。
@@ -54,21 +62,25 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private lateinit var inputRoot: View
     private lateinit var btnInstruction: ImageButton
     private lateinit var btnHandwritingMode: ImageButton
+    private lateinit var btnNumericKeypadMode: ImageButton
     private lateinit var textStatus: TextView
     private lateinit var textPreview: TextView
     private lateinit var textInstructionScope: TextView
     private lateinit var waveform: WaveformView
-    private lateinit var pageVoice: View
+    private lateinit var pageVoice: LinearLayout
     private lateinit var pageKeys: View
     private lateinit var inputModeGroup: View
+    private lateinit var inputContentArea: View
     private lateinit var previewContainer: View
     private lateinit var handwritingPanel: View
+    private lateinit var numericKeypadPanel: View
     private lateinit var handwritingPad: HandwritingPadView
     private lateinit var handwritingCandidateScroll: HorizontalScrollView
     private lateinit var handwritingCandidates: LinearLayout
     private lateinit var btnHandwritingChinese: TextView
     private lateinit var btnHandwritingEnglish: TextView
     private lateinit var voicePurposeControls: View
+    private lateinit var voiceActionArea: View
     private lateinit var voicePurposeThumb: View
     private lateinit var instructionReviewActions: View
     private lateinit var btnInstructionCancel: TextView
@@ -76,14 +88,18 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private lateinit var btnInstructionApply: TextView
     private lateinit var aiButtons: List<TextView>
     private lateinit var modeButtons: Map<SpeechInputMode, TextView>
+    private var appliedVoiceLayoutKey: String? = null
+    private var wideContentOnRight = false
 
     private var session: AsrSession? = null
     private var sessionText = StringBuilder()
     private var voiceHistoryBuffer = StringBuilder()
+    private var numericHistoryBuffer = StringBuilder()
     private var interim = ""
     private var aiBusy = false
     private var shortcutPageVisible = false
     private var handwritingEnabled = false
+    private var numericKeypadEnabled = false
     private var selectedHandwritingLanguage = HandwritingLanguage.SIMPLIFIED_CHINESE
     private var handwritingReadyLanguage: HandwritingLanguage? = null
     private var handwritingComposingText = ""
@@ -93,6 +109,13 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private var pendingInputMode: SpeechInputMode? = null
     private var pendingInstructionActivation = false
     private var editorSessionId = 0L
+    private var currentSelectionStart = -1
+    private var currentSelectionEnd = -1
+    private var deleteBatchText = ""
+    private var deleteBatchVerified = true
+    private var deleteBatchSessionId = -1L
+    private var deleteBatchCursorBefore: Int? = null
+    private var lastDeleteEvidence: DeleteEvidence? = null
     private var instructionState: InstructionState = InstructionState.Off
     private var instructionText = StringBuilder()
     private var instructionInterim = ""
@@ -117,16 +140,33 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             deleteRepeatHandler.postDelayed(this, DELETE_REPEAT_INTERVAL_MS)
         }
     }
+    private val flushDeleteEvidenceAction = Runnable { flushDeleteEvidence() }
+    private val inputRootLayoutChangeListener = View.OnLayoutChangeListener {
+            _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+        val width = right - left
+        val height = bottom - top
+        if (width > 0 && height > 0 &&
+            (width != oldRight - oldLeft || height != oldBottom - oldTop)
+        ) {
+            applyAdaptivePanelWidth(width, height)
+        }
+    }
 
     override fun onCreateInputView(): View {
         val view = layoutInflater.inflate(R.layout.ime_voice_panel, null)
+        if (::inputRoot.isInitialized) {
+            inputRoot.removeOnLayoutChangeListener(inputRootLayoutChangeListener)
+        }
         inputRoot = view
+        inputRoot.addOnLayoutChangeListener(inputRootLayoutChangeListener)
         inputRoot.keepScreenOn = asrKeepScreenOn
+        wideContentOnRight = Prefs.getBool(this, Prefs.KEY_WIDE_IME_CONTENT_ON_RIGHT, false)
         applyMaximumPanelHeight(view)
         btnMic = view.findViewById(R.id.btnMic)
         btnCmd = view.findViewById(R.id.btnCmd)
         btnInstruction = view.findViewById(R.id.btnInstruction)
         btnHandwritingMode = view.findViewById(R.id.btnHandwritingMode)
+        btnNumericKeypadMode = view.findViewById(R.id.btnNumericKeypadMode)
         textStatus = view.findViewById(R.id.textStatus)
         textPreview = view.findViewById(R.id.textPreview)
         textInstructionScope = view.findViewById(R.id.textInstructionScope)
@@ -134,14 +174,17 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         pageVoice = view.findViewById(R.id.pageVoice)
         pageKeys = view.findViewById(R.id.pageKeys)
         inputModeGroup = view.findViewById(R.id.inputModeGroup)
+        inputContentArea = view.findViewById(R.id.inputContentArea)
         previewContainer = view.findViewById(R.id.previewContainer)
         handwritingPanel = view.findViewById(R.id.handwritingPanel)
+        numericKeypadPanel = view.findViewById(R.id.numericKeypadPanel)
         handwritingPad = view.findViewById(R.id.handwritingPad)
         handwritingCandidateScroll = view.findViewById(R.id.handwritingCandidateScroll)
         handwritingCandidates = view.findViewById(R.id.handwritingCandidates)
         btnHandwritingChinese = view.findViewById(R.id.btnHandwritingChinese)
         btnHandwritingEnglish = view.findViewById(R.id.btnHandwritingEnglish)
         voicePurposeControls = view.findViewById(R.id.voicePurposeControls)
+        voiceActionArea = view.findViewById(R.id.voiceActionArea)
         voicePurposeThumb = view.findViewById(R.id.voicePurposeThumb)
         instructionReviewActions = view.findViewById(R.id.instructionReviewActions)
         btnInstructionCancel = view.findViewById(R.id.btnInstructionCancel)
@@ -154,7 +197,6 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         )
         modeButtons = mapOf(
             SpeechInputMode.CHINESE to view.findViewById(R.id.btnModeChinese),
-            SpeechInputMode.NUMBER to view.findViewById(R.id.btnModeNumber),
             SpeechInputMode.ENGLISH to view.findViewById(R.id.btnModeEnglish),
         )
         reloadSpeechModePreferences()
@@ -167,6 +209,13 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         view.findViewById<View>(R.id.btnEnter).setSystemHapticClick {
             if (handwritingEnabled) finishHandwritingComposition()
             sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+        }
+        view.findViewById<View>(R.id.btnSpace).setSystemHapticClick {
+            if (handwritingEnabled) finishHandwritingComposition()
+            currentInputConnection?.let { connection ->
+                connection.finishComposingText()
+                if (connection.commitText(" ", 1)) sessionText.append(' ')
+            }
         }
         view.findViewById<View>(R.id.btnSettings).setSystemHapticClick { openSettings() }
         btnCmd.setSystemHapticClick { toggleShortcutPage() }
@@ -187,6 +236,9 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         btnHandwritingMode.setSystemHapticClick(HapticFeedbackConstants.CONTEXT_CLICK) {
             toggleHandwritingMode()
         }
+        btnNumericKeypadMode.setSystemHapticClick(HapticFeedbackConstants.CONTEXT_CLICK) {
+            toggleNumericKeypadMode()
+        }
         btnInstructionCancel.setSystemHapticClick { cancelInstructionMode() }
         btnInstructionRetry.setSystemHapticClick { retryInstruction() }
         btnInstructionApply.setSystemHapticClick { applyInstructionResult() }
@@ -197,6 +249,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         }
 
         bindShortcutKeys(view)
+        bindNumericKeys(view)
 
         view.findViewById<TextView>(R.id.btnSummarize).setSystemHapticClick {
             runAi(AiProcessor.Mode.SUMMARIZE)
@@ -209,23 +262,36 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         }
         updateInputModeVisual()
         updateHandwritingLanguageVisual()
+        view.post { applyAdaptivePanelWidth() }
         return view
     }
 
     override fun onEvaluateFullscreenMode(): Boolean = false
 
+    override fun onWindowShown() {
+        super.onWindowShown()
+        if (::inputRoot.isInitialized) inputRoot.post { applyAdaptivePanelWidth() }
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (::inputRoot.isInitialized) {
-            inputRoot.post { applyMaximumPanelHeight(inputRoot) }
+            inputRoot.post {
+                applyMaximumPanelHeight(inputRoot)
+                applyAdaptivePanelWidth()
+            }
         }
     }
 
     override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         applyMaximumPanelHeight(inputRoot)
+        inputRoot.post { applyAdaptivePanelWidth() }
         // 每次弹出面板时重置会话状态
         editorSessionId += 1
+        resetEditEvidence()
+        currentSelectionStart = info?.initialSelStart ?: -1
+        currentSelectionEnd = info?.initialSelEnd ?: -1
         cancelInstructionMode(refresh = false)
         session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
             discardAsrUntilIdle = true
@@ -238,6 +304,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         pendingInputMode = null
         pendingInstructionActivation = false
         resetHandwritingMode(commitComposition = false)
+        resetNumericKeypadMode()
         shortcutPageVisible = false
         pageVoice.animate().cancel()
         pageKeys.animate().cancel()
@@ -256,9 +323,14 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     }
 
     override fun onDestroy() {
+        if (::inputRoot.isInitialized) {
+            inputRoot.removeOnLayoutChangeListener(inputRootLayoutChangeListener)
+        }
         setAsrKeepScreenOn(false)
         stopDeleteRepeat()
+        flushDeleteEvidence()
         flushVoiceHistory()
+        flushNumericHistory()
         cancelPendingHandwritingRecognition()
         handwritingRecognizer.close()
         cancelInstructionMode(refresh = false)
@@ -268,8 +340,11 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     override fun onFinishInputView(finishingInput: Boolean) {
         stopDeleteRepeat()
+        flushDeleteEvidence()
         resetHandwritingMode(commitComposition = true)
+        resetNumericKeypadMode()
         flushVoiceHistory()
+        flushNumericHistory()
         editorSessionId += 1
         session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
             discardAsrUntilIdle = true
@@ -279,11 +354,29 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         super.onFinishInputView(finishingInput)
     }
 
+    override fun onUpdateSelection(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        newSelEnd: Int,
+        candidatesStart: Int,
+        candidatesEnd: Int,
+    ) {
+        super.onUpdateSelection(
+            oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd
+        )
+        currentSelectionStart = newSelStart
+        currentSelectionEnd = newSelEnd
+    }
+
     // ---------- ⌘ 快捷键面板 ----------
 
     private fun toggleShortcutPage() {
         if (!shortcutPageVisible && handwritingEnabled) {
             resetHandwritingMode(commitComposition = true)
+        }
+        if (!shortcutPageVisible && numericKeypadEnabled) {
+            resetNumericKeypadMode()
         }
         shortcutPageVisible = !shortcutPageVisible
         animateShortcutPage(shortcutPageVisible)
@@ -295,7 +388,12 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private fun animateShortcutPage(showShortcuts: Boolean) {
         val incoming = if (showShortcuts) pageKeys else pageVoice
         val outgoing = if (showShortcuts) pageVoice else pageKeys
-        val distance = resources.displayMetrics.widthPixels * PAGE_SLIDE_DISTANCE_RATIO
+        val availableWidth = inputRoot.width.takeIf { it > 0 }
+            ?: resources.configuration.screenWidthDp
+                .takeIf { it > 0 }
+                ?.let { (it * resources.displayMetrics.density).toInt() }
+            ?: resources.displayMetrics.widthPixels
+        val distance = availableWidth * PAGE_SLIDE_DISTANCE_RATIO
 
         incoming.animate().cancel()
         outgoing.animate().cancel()
@@ -332,6 +430,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             animateShortcutPage(showShortcuts = false)
             btnCmd.background = getDrawable(R.drawable.bg_icon_button)
         }
+        if (numericKeypadEnabled) resetNumericKeypadMode()
         if (instructionState !is InstructionState.Off) cancelInstructionMode(refresh = false)
         session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
             discardAsrUntilIdle = true
@@ -368,6 +467,94 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             waveform.visibility = View.VISIBLE
             renderPurposeModeVisual()
         }
+    }
+
+    // ---------- 数字键盘输入 ----------
+
+    private fun toggleNumericKeypadMode() {
+        if (numericKeypadEnabled) {
+            resetNumericKeypadMode()
+            refreshIdleHint()
+            return
+        }
+        if (shortcutPageVisible) {
+            shortcutPageVisible = false
+            animateShortcutPage(showShortcuts = false)
+            btnCmd.background = getDrawable(R.drawable.bg_icon_button)
+        }
+        if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
+        if (instructionState !is InstructionState.Off) cancelInstructionMode(refresh = false)
+        session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
+            discardAsrUntilIdle = true
+            it.stop()
+        }
+        flushVoiceHistory()
+        numericKeypadEnabled = true
+        numericHistoryBuffer = StringBuilder()
+        inputModeGroup.visibility = View.GONE
+        previewContainer.visibility = View.GONE
+        handwritingPanel.visibility = View.GONE
+        numericKeypadPanel.visibility = View.VISIBLE
+        waveform.visibility = View.GONE
+        textStatus.text = getString(R.string.numeric_keypad_hint)
+        textStatus.setTextColor(getColor(R.color.text_hint))
+        renderPurposeModeVisual()
+    }
+
+    private fun resetNumericKeypadMode() {
+        flushNumericHistory()
+        numericKeypadEnabled = false
+        if (::numericKeypadPanel.isInitialized) {
+            numericKeypadPanel.visibility = View.GONE
+            previewContainer.visibility = View.VISIBLE
+            inputModeGroup.visibility = View.VISIBLE
+            waveform.visibility = View.VISIBLE
+            renderPurposeModeVisual()
+        }
+    }
+
+    private fun bindNumericKeys(view: View) {
+        mapOf(
+            R.id.keyNumber0 to "0",
+            R.id.keyNumber1 to "1",
+            R.id.keyNumber2 to "2",
+            R.id.keyNumber3 to "3",
+            R.id.keyNumber4 to "4",
+            R.id.keyNumber5 to "5",
+            R.id.keyNumber6 to "6",
+            R.id.keyNumber7 to "7",
+            R.id.keyNumber8 to "8",
+            R.id.keyNumber9 to "9",
+            R.id.keyNumber00 to "00",
+            R.id.keyNumberDecimal to ".",
+            R.id.keyNumberMinus to "-",
+            R.id.keyNumberPlus to "+",
+            R.id.keyNumberColon to ":",
+            R.id.keyNumberSlash to "/",
+        ).forEach { (id, value) ->
+            view.findViewById<View>(id).setSystemHapticClick {
+                commitNumericKey(value)
+            }
+        }
+    }
+
+    private fun commitNumericKey(value: String) {
+        if (!numericKeypadEnabled) return
+        val committed = currentInputConnection?.let { connection ->
+            connection.finishComposingText()
+            connection.commitText(value, 1)
+        } == true
+        if (committed) {
+            numericHistoryBuffer.append(value)
+            sessionText.append(value)
+            recordCommittedEdit(InputSource.NUMERIC_KEYPAD, value)
+        }
+    }
+
+    private fun flushNumericHistory() {
+        val text = numericHistoryBuffer.toString()
+        numericHistoryBuffer = StringBuilder()
+        recordInput(InputSource.NUMERIC_KEYPAD, text)
     }
 
     private fun prepareHandwritingModel() {
@@ -544,6 +731,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         currentInputConnection?.finishComposingText()
         sessionText.append(text)
         recordInput(InputSource.HANDWRITING, text)
+        recordCommittedEdit(InputSource.HANDWRITING, text)
         handwritingComposingText = ""
         refreshPreview()
     }
@@ -584,8 +772,11 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             selectedHandwritingLanguage == language
 
     private fun applyMaximumPanelHeight(root: View) {
+        val configurationHeight = resources.configuration.screenHeightDp
+            .takeIf { it > 0 }
+            ?.let { (it * resources.displayMetrics.density).toInt() }
         val height = InputPanelSizing.heightPx(
-            screenHeightPx = resources.displayMetrics.heightPixels,
+            screenHeightPx = configurationHeight ?: resources.displayMetrics.heightPixels,
             density = resources.displayMetrics.density,
             desiredHeightDp = PANEL_DESIRED_HEIGHT_DP,
             maximumScreenFraction = PANEL_MAXIMUM_SCREEN_FRACTION,
@@ -597,6 +788,259 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         params.width = ViewGroup.LayoutParams.MATCH_PARENT
         params.height = height
         root.layoutParams = params
+    }
+
+    private fun applyAdaptivePanelWidth(
+        measuredWidth: Int = inputRoot.width,
+        measuredHeight: Int = inputRoot.height,
+    ) {
+        if (!::inputRoot.isInitialized || !::pageVoice.isInitialized || !::pageKeys.isInitialized) return
+        val density = resources.displayMetrics.density
+        val availableWidth = measuredWidth.takeIf { it > 0 }
+            ?: resources.configuration.screenWidthDp
+                .takeIf { it > 0 }
+                ?.let { (it * density).toInt() }
+            ?: resources.displayMetrics.widthPixels
+        val availableHeight = measuredHeight.takeIf { it > 0 }
+            ?: resources.configuration.screenHeightDp
+            .takeIf { it > 0 }
+            ?.let { (it * density).toInt() }
+            ?: resources.displayMetrics.heightPixels
+        val profile = AdaptiveWindowProfile.fromPixels(availableWidth, availableHeight, density)
+
+        applyAdaptiveVoiceLayout(
+            wide = profile.isWide,
+            density = density,
+            controlColumnWidthDp = profile.imeControlColumnWidthDp,
+        )
+        constrainPanelPage(pageVoice, availableWidth, profile.imePrimaryContentMaxWidthDp, density)
+        constrainPanelPage(pageKeys, availableWidth, profile.imeShortcutContentMaxWidthDp, density)
+    }
+
+    private fun applyAdaptiveVoiceLayout(
+        wide: Boolean,
+        density: Float,
+        controlColumnWidthDp: Int,
+    ) {
+        val layoutKey = "$wide:$controlColumnWidthDp:$wideContentOnRight"
+        if (appliedVoiceLayoutKey == layoutKey) return
+        if (appliedVoiceLayoutKey == null && !wide) {
+            appliedVoiceLayoutKey = layoutKey
+            return
+        }
+
+        pageVoice.removeAllViews()
+        listOf(
+            inputModeGroup,
+            textInstructionScope,
+            inputContentArea,
+            textStatus,
+            waveform,
+            voiceActionArea,
+        ).forEach(::detachFromParent)
+
+        if (wide) {
+            pageVoice.orientation = LinearLayout.HORIZONTAL
+            pageVoice.gravity = Gravity.CENTER
+            val outerPadding = (8 * density).toInt()
+            pageVoice.setPadding(outerPadding, outerPadding, outerPadding, outerPadding)
+
+            inputContentArea.setBackgroundResource(R.drawable.bg_settings_card)
+            val controlColumn = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_HORIZONTAL
+                setPadding(
+                    0,
+                    (4 * density).toInt(),
+                    0,
+                    (4 * density).toInt(),
+                )
+                setBackgroundResource(R.drawable.bg_settings_card)
+            }
+            val modeRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            modeRow.addView(
+                inputModeGroup,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    (38 * density).toInt(),
+                ),
+            )
+            modeRow.addView(
+                ImageButton(this).apply {
+                    setImageResource(R.drawable.ic_material_swap_24)
+                    imageTintList = ColorStateList.valueOf(getColor(R.color.icon_primary))
+                    background = getDrawable(R.drawable.bg_icon_button)
+                    scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+                    val padding = (8 * density).toInt()
+                    setPadding(padding, padding, padding, padding)
+                    contentDescription = getString(
+                        if (wideContentOnRight) R.string.a11y_wide_ime_move_content_left
+                        else R.string.a11y_wide_ime_move_content_right
+                    )
+                    setSystemHapticClick {
+                        wideContentOnRight = !wideContentOnRight
+                        Prefs.putBool(
+                            this@InkTalkIME,
+                            Prefs.KEY_WIDE_IME_CONTENT_ON_RIGHT,
+                            wideContentOnRight,
+                        )
+                        appliedVoiceLayoutKey = null
+                        applyAdaptivePanelWidth()
+                    }
+                },
+                LinearLayout.LayoutParams(
+                    (38 * density).toInt(),
+                    (38 * density).toInt(),
+                ).apply {
+                    marginStart = (8 * density).toInt()
+                },
+            )
+            controlColumn.addView(
+                modeRow,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    (38 * density).toInt(),
+                ).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = (2 * density).toInt()
+                },
+            )
+            controlColumn.addView(
+                textInstructionScope,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    (24 * density).toInt(),
+                ).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = (3 * density).toInt()
+                },
+            )
+            controlColumn.addView(
+                View(this),
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
+            )
+            controlColumn.addView(
+                textStatus,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (24 * density).toInt(),
+                ),
+            )
+            controlColumn.addView(
+                waveform,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (18 * density).toInt(),
+                ).apply {
+                    marginStart = (24 * density).toInt()
+                    marginEnd = (24 * density).toInt()
+                },
+            )
+            controlColumn.addView(
+                voiceActionArea,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (78 * density).toInt(),
+                ),
+            )
+            val gap = (10 * density).toInt()
+            val contentParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                1f,
+            )
+            val controlParams = LinearLayout.LayoutParams(
+                (controlColumnWidthDp * density).toInt(),
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            if (wideContentOnRight) {
+                controlParams.marginEnd = gap
+                pageVoice.addView(controlColumn, controlParams)
+                pageVoice.addView(inputContentArea, contentParams)
+            } else {
+                contentParams.marginEnd = gap
+                pageVoice.addView(inputContentArea, contentParams)
+                pageVoice.addView(controlColumn, controlParams)
+            }
+        } else {
+            pageVoice.orientation = LinearLayout.VERTICAL
+            pageVoice.gravity = Gravity.NO_GRAVITY
+            pageVoice.setPadding(0, 0, 0, 0)
+            inputContentArea.setBackgroundResource(0)
+
+            pageVoice.addView(
+                inputModeGroup,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    (38 * density).toInt(),
+                ).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = (6 * density).toInt()
+                },
+            )
+            pageVoice.addView(
+                textInstructionScope,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    (24 * density).toInt(),
+                ).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = (3 * density).toInt()
+                },
+            )
+            pageVoice.addView(
+                inputContentArea,
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
+            )
+            pageVoice.addView(
+                textStatus,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (24 * density).toInt(),
+                ),
+            )
+            pageVoice.addView(
+                waveform,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (18 * density).toInt(),
+                ).apply {
+                    marginStart = (48 * density).toInt()
+                    marginEnd = (48 * density).toInt()
+                },
+            )
+            pageVoice.addView(
+                voiceActionArea,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (78 * density).toInt(),
+                ),
+            )
+        }
+        appliedVoiceLayoutKey = layoutKey
+    }
+
+    private fun detachFromParent(view: View) {
+        (view.parent as? ViewGroup)?.removeView(view)
+    }
+
+    private fun constrainPanelPage(
+        page: View,
+        availableWidth: Int,
+        maximumWidthDp: Int,
+        density: Float,
+    ) {
+        val targetWidth = AdaptiveWindowProfile(widthDp = maximumWidthDp, heightDp = 1)
+            .contentWidthPx(availableWidth, density, maximumWidthDp)
+        val params = (page.layoutParams as? FrameLayout.LayoutParams)
+            ?: FrameLayout.LayoutParams(targetWidth, ViewGroup.LayoutParams.MATCH_PARENT)
+        if (params.width == targetWidth && params.gravity == Gravity.CENTER_HORIZONTAL) return
+        params.width = targetWidth
+        params.gravity = Gravity.CENTER_HORIZONTAL
+        page.layoutParams = params
     }
 
     private fun bindShortcutKeys(view: View) {
@@ -706,7 +1150,31 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             clearHandwriting(cancelComposition = true)
             return
         }
+        val connection = currentInputConnection
+        val sessionId = editorSessionId
+        val sensitive = InstructionContextResolver.isSensitiveInputType(
+            currentInputEditorInfo?.inputType ?: android.text.InputType.TYPE_NULL
+        )
+        val selected = if (sensitive) null else connection?.getSelectedText(0)?.toString()
+        val before = if (sensitive || !selected.isNullOrEmpty()) null else
+            connection?.getTextBeforeCursor(DELETE_CONTEXT_CHARS, 0)?.toString()
+        val deleted = selected?.takeIf { it.isNotEmpty() }
+            ?: before?.let { HotwordSelection.units(it).lastOrNull()?.text }
+        val cursorBefore = currentSelectionStart.takeIf { it >= 0 }
         sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+        if (!deleted.isNullOrEmpty() && connection != null) {
+            deleteRepeatHandler.postDelayed({
+                if (sessionId != editorSessionId) return@postDelayed
+                val verified = if (!selected.isNullOrEmpty()) {
+                    connection.getSelectedText(0)?.toString() != selected
+                } else {
+                    val after = connection.getTextBeforeCursor(DELETE_CONTEXT_CHARS - 1, 0)?.toString()
+                    val expected = before.orEmpty().dropLast(deleted.length).takeLast(DELETE_CONTEXT_CHARS - 1)
+                    after == expected
+                }
+                recordDeletePiece(deleted, verified, cursorBefore)
+            }, DELETE_VERIFY_DELAY_MS)
+        }
     }
 
     private fun stopDeleteRepeat() {
@@ -719,6 +1187,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     private fun toggleSession() {
         if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
+        if (numericKeypadEnabled) resetNumericKeypadMode()
         if (instructionState is InstructionState.Processing ||
             instructionState is InstructionState.Reviewing
         ) return
@@ -774,7 +1243,6 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             } else {
                 R.string.hint_tap_to_talk
             }
-            SpeechInputMode.NUMBER -> R.string.hint_tap_number
             SpeechInputMode.ENGLISH -> R.string.hint_tap_english
         })
         textStatus.setTextColor(getColor(R.color.text_hint))
@@ -838,7 +1306,6 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
                 } else {
                     R.string.a11y_mode_chinese
                 }
-                SpeechInputMode.NUMBER -> R.string.a11y_mode_number
                 SpeechInputMode.ENGLISH -> R.string.a11y_mode_english
             })
             if (mode == SpeechInputMode.CHINESE) {
@@ -866,11 +1333,14 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
                 EnglishRecognitionStrategy.REALTIME_BILINGUAL.preferenceValue,
             )
         )
-        val storedMode = SpeechInputMode.fromPreference(
-            Prefs.get(this, Prefs.KEY_INPUT_MODE, SpeechInputMode.CHINESE.preferenceValue)
+        val storedValue = Prefs.get(
+            this,
+            Prefs.KEY_INPUT_MODE,
+            SpeechInputMode.CHINESE.preferenceValue,
         )
+        val storedMode = SpeechInputMode.fromPreference(storedValue)
         inputMode = storedMode.normalizedFor(englishRecognitionStrategy)
-        if (inputMode != storedMode) {
+        if (storedValue != inputMode.preferenceValue) {
             Prefs.put(this, Prefs.KEY_INPUT_MODE, inputMode.preferenceValue)
         }
     }
@@ -891,6 +1361,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     private fun toggleInstructionMode() {
         if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
+        if (numericKeypadEnabled) resetNumericKeypadMode()
         if (instructionState !is InstructionState.Off) {
             cancelInstructionMode()
             return
@@ -1198,14 +1669,20 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private fun renderPurposeModeVisual() {
         if (!::btnInstruction.isInitialized) return
         val instructionActive = instructionState !is InstructionState.Off
-        val specialModeActive = instructionActive || handwritingEnabled
+        val specialModeActive = instructionActive || handwritingEnabled || numericKeypadEnabled
         btnInstruction.isSelected = instructionActive
         btnHandwritingMode.isSelected = handwritingEnabled
+        btnNumericKeypadMode.isSelected = numericKeypadEnabled
         voicePurposeThumb.animate().cancel()
         voicePurposeThumb.visibility = if (specialModeActive) View.VISIBLE else View.INVISIBLE
         if (specialModeActive) {
+            val selectedIndex = when {
+                numericKeypadEnabled -> 2
+                handwritingEnabled -> 1
+                else -> 0
+            }
             voicePurposeThumb.animate()
-                .translationX(if (handwritingEnabled) purposeThumbTranslationPx() else 0f)
+                .translationX(purposeThumbTranslationPx(selectedIndex))
                 .setDuration(PURPOSE_SLIDE_DURATION_MS)
                 .start()
         } else {
@@ -1214,6 +1691,10 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         btnHandwritingMode.contentDescription = getString(
             if (handwritingEnabled) R.string.a11y_disable_handwriting
             else R.string.a11y_enable_handwriting
+        )
+        btnNumericKeypadMode.contentDescription = getString(
+            if (numericKeypadEnabled) R.string.a11y_disable_numeric_keypad
+            else R.string.a11y_enable_numeric_keypad
         )
     }
 
@@ -1360,7 +1841,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     override fun onStateChanged(state: AsrSession.State) {
         setAsrKeepScreenOn(state != AsrSession.State.IDLE)
-        if (handwritingEnabled) {
+        if (handwritingEnabled || numericKeypadEnabled) {
             if (state == AsrSession.State.IDLE) {
                 updateMicVisual(false)
                 discardAsrUntilIdle = false
@@ -1432,7 +1913,10 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         }
         val committedToEditor = currentInputConnection?.commitText(text, 1) == true
         sessionText.append(text)
-        if (committedToEditor) voiceHistoryBuffer.append(text)
+        if (committedToEditor) {
+            voiceHistoryBuffer.append(text)
+            recordCommittedEdit(InputSource.VOICE, text)
+        }
         interim = ""
         refreshPreview()
     }
@@ -1526,6 +2010,96 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         }
     }
 
+    private fun recordDeletePiece(text: String, verified: Boolean, cursorBefore: Int?) {
+        if (deleteBatchSessionId != editorSessionId) {
+            flushDeleteEvidence()
+            deleteBatchSessionId = editorSessionId
+            deleteBatchCursorBefore = cursorBefore
+        }
+        deleteBatchText = text + deleteBatchText
+        deleteBatchVerified = deleteBatchVerified && verified
+        deleteRepeatHandler.removeCallbacks(flushDeleteEvidenceAction)
+        deleteRepeatHandler.postDelayed(flushDeleteEvidenceAction, DELETE_BATCH_IDLE_MS)
+    }
+
+    private fun flushDeleteEvidence(): DeleteEvidence? {
+        deleteRepeatHandler.removeCallbacks(flushDeleteEvidenceAction)
+        val deleted = deleteBatchText
+        if (deleted.isEmpty()) return lastDeleteEvidence
+        val createdAt = System.currentTimeMillis()
+        val eventId = try {
+            inputHistoryStore.appendEditEvent(
+                editorSessionId = deleteBatchSessionId,
+                eventType = "delete",
+                verified = deleteBatchVerified,
+                deletedText = deleted,
+                cursorBefore = deleteBatchCursorBefore,
+                cursorAfter = currentSelectionStart.takeIf { it >= 0 },
+                createdAt = createdAt,
+            )
+        } catch (error: RuntimeException) {
+            Log.e("InkTalkHistory", "Failed to append delete evidence", error)
+            -1L
+        }
+        lastDeleteEvidence = if (deleteBatchVerified && eventId >= 0) {
+            DeleteEvidence(eventId, deleteBatchSessionId, deleted, createdAt)
+        } else null
+        deleteBatchText = ""
+        deleteBatchVerified = true
+        deleteBatchSessionId = -1L
+        deleteBatchCursorBefore = null
+        return lastDeleteEvidence
+    }
+
+    private fun recordCommittedEdit(source: InputSource, text: String) {
+        if (text.isBlank()) return
+        val inputType = currentInputEditorInfo?.inputType ?: android.text.InputType.TYPE_NULL
+        if (InstructionContextResolver.isSensitiveInputType(inputType)) return
+        val evidence = flushDeleteEvidence()
+        val createdAt = System.currentTimeMillis()
+        val insertEventId = try {
+            inputHistoryStore.appendEditEvent(
+                editorSessionId = editorSessionId,
+                eventType = "commit",
+                verified = true,
+                insertedText = text,
+                source = source,
+                cursorAfter = currentSelectionStart.takeIf { it >= 0 },
+                createdAt = createdAt,
+            )
+        } catch (error: RuntimeException) {
+            Log.e("InkTalkHistory", "Failed to append commit evidence", error)
+            -1L
+        }
+        if (evidence != null && evidence.sessionId == editorSessionId &&
+            createdAt - evidence.createdAt <= CORRECTION_PAIR_WINDOW_MS
+        ) {
+            CorrectionCandidateDetector.detect(evidence.deletedText, text)?.let { correction ->
+                try {
+                    val date = Instant.ofEpochMilli(createdAt).atZone(ZoneId.systemDefault()).toLocalDate()
+                    inputHistoryStore.appendCorrectionCandidate(
+                        date,
+                        correction,
+                        if (insertEventId >= 0) insertEventId else evidence.eventId,
+                        createdAt,
+                    )
+                } catch (error: RuntimeException) {
+                    Log.e("InkTalkHistory", "Failed to append correction candidate", error)
+                }
+            }
+        }
+        lastDeleteEvidence = null
+    }
+
+    private fun resetEditEvidence() {
+        deleteRepeatHandler.removeCallbacks(flushDeleteEvidenceAction)
+        deleteBatchText = ""
+        deleteBatchVerified = true
+        deleteBatchSessionId = -1L
+        deleteBatchCursorBefore = null
+        lastDeleteEvidence = null
+    }
+
     private fun refreshPreview() {
         textPreview.text = if (interim.isEmpty()) sessionText.toString()
         else sessionText.toString() + interim
@@ -1549,6 +2123,10 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     companion object {
         private const val DELETE_REPEAT_INTERVAL_MS = 55L
+        private const val DELETE_VERIFY_DELAY_MS = 45L
+        private const val DELETE_BATCH_IDLE_MS = 260L
+        private const val DELETE_CONTEXT_CHARS = 65
+        private const val CORRECTION_PAIR_WINDOW_MS = 10_000L
         private const val HANDWRITING_IDLE_DELAY_MS = 650L
         private const val HANDWRITING_PRE_CONTEXT_CHARS = 20
         private const val HANDWRITING_CANDIDATE_LIMIT = 5
@@ -1561,8 +2139,8 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         private const val PAGE_SLIDE_DISTANCE_RATIO = 0.16f
     }
 
-    private fun purposeThumbTranslationPx(): Float =
-        PURPOSE_THUMB_TRANSLATION_DP * resources.displayMetrics.density
+    private fun purposeThumbTranslationPx(index: Int): Float =
+        PURPOSE_THUMB_TRANSLATION_DP * index * resources.displayMetrics.density
 
     private sealed interface InstructionState {
         data object Off : InstructionState
@@ -1588,4 +2166,11 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             is Reviewing -> document
         }
     }
+
+    private data class DeleteEvidence(
+        val eventId: Long,
+        val sessionId: Long,
+        val deletedText: String,
+        val createdAt: Long,
+    )
 }

@@ -9,9 +9,11 @@
     android:scrollbars="none"
     android:overScrollMode="ifContentScrolls">
 
-    <LinearLayout
+    <com.inktalk.ime.ui.AdaptiveContentLayout
+        android:id="@+id/settingsContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:orientation="vertical"
         android:paddingStart="20dp"
         android:paddingTop="24dp"
@@ -250,6 +252,17 @@
                 android:drawableStart="@drawable/ic_material_save_24" />
         </LinearLayout>
 
+        <TextView style="@style/SettingsSection" android:text="@string/settings_update_section" />
+        <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_update_description" />
+        <LinearLayout style="@style/SettingsCard">
+            <Button
+                android:id="@+id/btnCheckUpdate"
+                style="@style/SettingsActionButton"
+                android:layout_marginBottom="0dp"
+                android:text="@string/settings_check_update"
+                android:drawableStart="@drawable/ic_material_download_24" />
+        </LinearLayout>
+
         <LinearLayout
             android:id="@+id/btnSave"
             style="@style/SettingsPrimaryButton"
@@ -273,5 +286,5 @@
             android:id="@+id/textStatus"
             style="@style/SettingsStatus"
             android:visibility="gone" />
-    </LinearLayout>
+    </com.inktalk.ime.ui.AdaptiveContentLayout>
 </ScrollView>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnHotwordsBack"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_icon_button"
+            android:contentDescription="@string/hotwords_back"
+            android:padding="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_material_arrow_back_24"
+            android:tint="@color/icon_primary"
+            tools:ignore="UseAppTint" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/SettingsHeaderTitle"
+                android:text="@string/hotwords_workspace_title" />
+
+            <TextView
+                style="@style/SettingsHeaderSubtitle"
+                android:text="@string/hotwords_workspace_description" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="14dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="340dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_settings_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/textPendingHotwordCandidates"
+                style="@style/SettingsSection"
+                android:layout_marginTop="0dp"
+                android:text="@string/hotwords_pending_candidates" />
+
+            <TextView
+                style="@style/SettingsSectionDescription"
+                android:text="@string/hotwords_candidate_workspace_help" />
+
+            <ScrollView
+                android:id="@+id/pendingHotwordCandidateScroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/pendingHotwordCandidates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="12dp" />
+            </ScrollView>
+        </LinearLayout>
+
+        <View
+            android:layout_width="20dp"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/SettingsSection"
+                android:layout_marginTop="0dp"
+                android:text="@string/hotwords_current_title" />
+
+            <TextView
+                style="@style/SettingsHint"
+                android:layout_marginTop="6dp"
+                android:text="@string/hotwords_editor_help" />
+
+            <TextView
+                android:id="@+id/textHotwordCount"
+                style="@style/SettingsLabel"
+                android:layout_marginTop="12dp"
+                tools:text="热词数量：240" />
+
+            <EditText
+                android:id="@+id/editHotwordList"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_settings_input"
+                android:gravity="top|start"
+                android:hint="@string/hotwords_editor_hint"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textNoSuggestions"
+                android:minHeight="180dp"
+                android:padding="14dp"
+                android:scrollbars="vertical"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnRestoreHotwords"
+                style="@style/SettingsActionButton"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="0dp"
+                android:drawableStart="@drawable/ic_material_auto_fix_18"
+                android:text="@string/hotwords_restore_defaults" />
+
+            <LinearLayout
+                android:id="@+id/btnSaveHotwords"
+                style="@style/SettingsPrimaryButton"
+                android:clickable="true"
+                android:contentDescription="@string/hotwords_save"
+                android:focusable="true"
+                tools:ignore="UseCompoundDrawables">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_material_save_24"
+                    android:tint="@android:color/white"
+                    tools:ignore="UseAppTint" />
+
+                <TextView
+                    style="@style/SettingsPrimaryButtonLabel"
+                    android:importantForAccessibility="no"
+                    android:text="@string/hotwords_save" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

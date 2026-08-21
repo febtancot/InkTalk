@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * 一次语音输入会话：连接 ASR → 采集上送 → 增量/定稿结果回调。
  *
- * 中文和数字使用双向流式优化版（bigmodel_async）+ 二遍识别；英文使用支持固定
+ * 中文与中英混合使用双向流式优化版（bigmodel_async）+ 二遍识别；英文使用支持固定
  * language=en-US 的 bigmodel_nostream。两条链路共享同一套采集、提交与收尾状态机。
  */
 class AsrSession(
@@ -148,18 +148,15 @@ class AsrSession(
                     val key = u.optLong("start_time").toString() + "-" +
                         u.optLong("end_time").toString() + "-" + text
                     if (committedKeys.add(key)) {
-                        val transformed = inputMode.transformResult(text)
-                        if (transformed.isNotEmpty()) {
-                            main.post { listener.onCommitted(transformed) }
-                        }
+                        main.post { listener.onCommitted(text) }
                     }
                 } else {
-                    interimSb.append(inputMode.transformResult(text))
+                    interimSb.append(text)
                 }
             }
         } else if (result != null) {
             // 未返回 utterances 时退化为整体文本作为增量
-            interimSb.append(inputMode.transformResult(result.optString("text", "")))
+            interimSb.append(result.optString("text", ""))
         }
 
         val interim = interimSb.toString()

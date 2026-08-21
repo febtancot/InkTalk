@@ -6,9 +6,11 @@
     android:clipToPadding="false"
     android:scrollbars="none">
 
-    <LinearLayout
+    <com.inktalk.ime.ui.AdaptiveContentLayout
+        android:id="@+id/historyContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:orientation="vertical"
         android:paddingStart="20dp"
         android:paddingTop="18dp"
@@ -137,6 +139,22 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/textCandidateSectionTitle"
+            style="@style/SettingsSection"
+            android:text="@string/history_candidate_title"
+            android:visibility="gone" />
+        <TextView
+            android:id="@+id/textCandidateSectionDescription"
+            style="@style/SettingsSectionDescription"
+            android:text="@string/history_candidate_description"
+            android:visibility="gone" />
+        <LinearLayout
+            android:id="@+id/historyCandidateContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
             android:id="@+id/textRawHistoryTitle"
             style="@style/SettingsSection"
             android:text="@string/history_raw_title" />
@@ -154,5 +172,5 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
-    </LinearLayout>
+    </com.inktalk.ime.ui.AdaptiveContentLayout>
 </ScrollView>

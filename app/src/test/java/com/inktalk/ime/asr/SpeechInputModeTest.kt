@@ -8,7 +8,7 @@ import org.junit.Test
 class SpeechInputModeTest {
     @Test
     fun restoresPersistedModesWithSafeFallback() {
-        assertEquals(SpeechInputMode.NUMBER, SpeechInputMode.fromPreference("number"))
+        assertEquals(SpeechInputMode.CHINESE, SpeechInputMode.fromPreference("number"))
         assertEquals(SpeechInputMode.ENGLISH, SpeechInputMode.fromPreference("en"))
         assertEquals(SpeechInputMode.CHINESE, SpeechInputMode.fromPreference("unknown"))
     }
@@ -38,11 +38,6 @@ class SpeechInputModeTest {
                 EnglishRecognitionStrategy.ENGLISH_PRIORITY
             )
         )
-        assertFalse(
-            SpeechInputMode.NUMBER.usesLanguageSpecificEndpoint(
-                EnglishRecognitionStrategy.ENGLISH_PRIORITY
-            )
-        )
     }
 
     @Test
@@ -60,7 +55,7 @@ class SpeechInputModeTest {
     @Test
     fun realtimeBilingualUsesOneCombinedLanguageEntry() {
         assertEquals(
-            listOf(SpeechInputMode.CHINESE, SpeechInputMode.NUMBER),
+            listOf(SpeechInputMode.CHINESE),
             SpeechInputMode.visibleModes(EnglishRecognitionStrategy.REALTIME_BILINGUAL),
         )
         assertEquals(

@@ -15,18 +15,20 @@ object Prefs {
     private const val EXPORT_VERSION = 1
     private const val MAX_EXPORTED_STRING_CHARS = 20_000
     private const val KEY_HOTWORDS_DEFAULTS_VERSION = "asr_hotwords_defaults_version"
-    private const val HOTWORDS_DEFAULTS_VERSION = 1
+    private const val HOTWORDS_DEFAULTS_VERSION = 2
     private const val KEY_ASR_UID = "asr_install_uid"
 
     const val KEY_API_KEY = "asr_api_key"
     const val KEY_APP_KEY = "asr_app_key"
     const val KEY_ACCESS_KEY = "asr_access_key"
     const val KEY_HOTWORDS = "asr_hotwords"
+    const val KEY_PRIORITY_HOTWORDS = "asr_priority_hotwords"
     const val KEY_ENABLE_DDC = "asr_enable_ddc"
     const val KEY_ENABLE_PUNC = "asr_enable_punc"
     const val KEY_ENABLE_ITN = "asr_enable_itn"
     const val KEY_INPUT_MODE = "speech_input_mode"
     const val KEY_ENGLISH_RECOGNITION_STRATEGY = "english_recognition_strategy"
+    const val KEY_WIDE_IME_CONTENT_ON_RIGHT = "wide_ime_content_on_right"
 
     const val KEY_AI_BASE_URL = "ai_base_url"
     const val KEY_AI_API_KEY = "ai_api_key"
@@ -53,7 +55,7 @@ object Prefs {
     fun resourceId(context: Context): String =
         get(context, KEY_RESOURCE_ID, ASR_RESOURCE_ID)
 
-    /** 双向流式优化版端点：中文和数字模式使用，支持实时增量结果。 */
+    /** 双向流式优化版端点：中文与中英混合模式使用，支持实时增量结果。 */
     const val ASR_ENDPOINT_ASYNC = "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async"
 
     /** 流式输入端点：支持通过 language=en-US 固定英文识别。 */
@@ -92,27 +94,56 @@ object Prefs {
     /** 旧版空值一次性迁移为内置词表；迁移后用户主动保存空词表仍保持为空。 */
     fun hotwords(context: Context): String {
         val preferences = sp(context)
-        if (preferences.getInt(KEY_HOTWORDS_DEFAULTS_VERSION, 0) < HOTWORDS_DEFAULTS_VERSION) {
-            val migrated = HotwordCatalog.migrateLegacy(
-                preferences.getString(KEY_HOTWORDS, null),
-            )
+        val version = preferences.getInt(KEY_HOTWORDS_DEFAULTS_VERSION, 0)
+        if (version < HOTWORDS_DEFAULTS_VERSION) {
+            var migrated = preferences.getString(KEY_HOTWORDS, null)
+            if (version < 1) migrated = HotwordCatalog.migrateLegacy(migrated)
+            if (version < 2) migrated = HotwordCatalog.migrateBrandName(migrated.orEmpty())
             preferences.edit()
                 .putString(KEY_HOTWORDS, migrated)
                 .putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
                 .apply()
-            return migrated
+            return migrated.orEmpty()
         }
         return get(context, KEY_HOTWORDS)
     }
 
     fun putHotwords(context: Context, raw: String): Int {
         val words = HotwordCatalog.parse(raw)
+        val activeKeys = words.mapTo(HashSet()) { it.lowercase() }
+        val priority = HotwordCatalog.parse(get(context, KEY_PRIORITY_HOTWORDS))
+            .filter { it.lowercase() in activeKeys }
         sp(context).edit()
             .putString(KEY_HOTWORDS, HotwordCatalog.serialize(words))
+            .putString(KEY_PRIORITY_HOTWORDS, HotwordCatalog.serialize(priority))
             .putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
             .apply()
         return words.size
     }
+
+    data class HotwordAddResult(val added: List<String>, val duplicates: List<String>)
+
+    fun addPriorityHotwords(context: Context, additions: Iterable<String>): HotwordAddResult {
+        val current = HotwordCatalog.parse(hotwords(context))
+        val currentKeys = current.mapTo(HashSet()) { it.lowercase() }
+        val requested = HotwordCatalog.parse(additions.joinToString("\n"))
+        val added = requested.filter { it.lowercase() !in currentKeys }
+        val duplicates = requested.filter { it.lowercase() in currentKeys }
+        val merged = HotwordCatalog.prepend(HotwordCatalog.serialize(current), added)
+        // 用户再次确认内置或已有热词时，也应提升其请求优先级。
+        val priority = HotwordCatalog.prepend(get(context, KEY_PRIORITY_HOTWORDS), requested)
+        sp(context).edit()
+            .putString(KEY_HOTWORDS, HotwordCatalog.serialize(merged))
+            .putString(KEY_PRIORITY_HOTWORDS, HotwordCatalog.serialize(priority))
+            .putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
+            .apply()
+        return HotwordAddResult(added, duplicates)
+    }
+
+    fun requestHotwords(context: Context): List<String> = HotwordCatalog.forRequest(
+        raw = hotwords(context),
+        priorityRaw = get(context, KEY_PRIORITY_HOTWORDS),
+    )
 
     /** 新版控制台只需 X-Api-Key；留空则回退旧版 App Key + Access Token。 */
     fun hasAsrCredentials(context: Context): Boolean =
@@ -134,6 +165,7 @@ object Prefs {
         settings.put(KEY_APP_KEY, get(context, KEY_APP_KEY))
         settings.put(KEY_ACCESS_KEY, get(context, KEY_ACCESS_KEY))
         settings.put(KEY_HOTWORDS, hotwords(context))
+        settings.put(KEY_PRIORITY_HOTWORDS, get(context, KEY_PRIORITY_HOTWORDS))
         settings.put(KEY_ENABLE_DDC, getBool(context, KEY_ENABLE_DDC, false))
         settings.put(KEY_ENABLE_PUNC, getBool(context, KEY_ENABLE_PUNC, true))
         settings.put(KEY_ENABLE_ITN, getBool(context, KEY_ENABLE_ITN, true))
@@ -173,7 +205,7 @@ object Prefs {
             throw ImportException("文件不是有效的 JSON")
         }
         if (root.optString("schema") != EXPORT_SCHEMA) {
-            throw ImportException("不是 InkTalk 配置文件")
+            throw ImportException("不是 inktalk 配置文件")
         }
         if (root.optInt("version", -1) != EXPORT_VERSION) {
             throw ImportException("暂不支持该配置文件版本")
@@ -230,6 +262,7 @@ object Prefs {
         KEY_APP_KEY,
         KEY_ACCESS_KEY,
         KEY_HOTWORDS,
+        KEY_PRIORITY_HOTWORDS,
         KEY_INPUT_MODE,
         KEY_ENGLISH_RECOGNITION_STRATEGY,
         KEY_RESOURCE_ID,

@@ -11,7 +11,7 @@ class HotwordCatalogTest {
         val words = HotwordCatalog.defaultWords
 
         assertTrue(words.size > 200)
-        assertTrue("InkTalk" in words)
+        assertTrue("inktalk" in words)
         assertTrue("OpenAI" in words)
         assertTrue("火山引擎" in words)
         assertTrue("ByteDance" in words)
@@ -60,6 +60,11 @@ class HotwordCatalogTest {
         )
     }
 
+    @Test fun brandMigrationPreservesEmptyAndOtherCustomWords() {
+        assertEquals("", HotwordCatalog.migrateBrandName(""))
+        assertEquals("inktalk，Custom", HotwordCatalog.migrateBrandName("InkTalk, Custom"))
+    }
+
     @Test
     fun requestHotwordsStayWithinConservativeTokenBudget() {
         val selected = HotwordCatalog.forRequest(HotwordCatalog.defaultStorageText)
@@ -69,5 +74,21 @@ class HotwordCatalogTest {
         assertTrue(selected.sumOf(HotwordCatalog::estimateTokens) <= 80)
         val sourceIndexes = selected.map(HotwordCatalog.defaultWords::indexOf)
         assertEquals(sourceIndexes.sorted(), sourceIndexes)
+    }
+
+    @Test
+    fun confirmedPriorityHotwordsAreSentBeforeDefaults() {
+        val raw = HotwordCatalog.defaultStorageText + "，MyCriticalName"
+        val selected = HotwordCatalog.forRequest(raw, priorityRaw = "MyCriticalName")
+        assertEquals("MyCriticalName", selected.first())
+        assertTrue(selected.sumOf(HotwordCatalog::estimateTokens) <= 80)
+    }
+
+    @Test
+    fun newestHotwordsArePrependedAndDeduplicated() {
+        assertEquals(
+            listOf("最新词", "第二个", "旧词"),
+            HotwordCatalog.prepend("旧词，第二个", listOf("最新词", "第二个")),
+        )
     }
 }

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.inktalk.ime.ui.AdaptiveContentLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingStart="20dp"
     android:paddingTop="18dp"
@@ -43,6 +44,26 @@
     <TextView
         style="@style/SettingsHint"
         android:text="@string/hotwords_editor_help" />
+
+    <TextView
+        android:id="@+id/textPendingHotwordCandidates"
+        style="@style/SettingsLabel"
+        android:text="@string/hotwords_pending_candidates"
+        android:visibility="gone" />
+
+    <HorizontalScrollView
+        android:id="@+id/pendingHotwordCandidateScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:scrollbars="none"
+        android:visibility="gone">
+        <LinearLayout
+            android:id="@+id/pendingHotwordCandidates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
     <TextView
         android:id="@+id/textHotwordCount"
@@ -97,4 +118,4 @@
             android:importantForAccessibility="no"
             android:text="@string/hotwords_save" />
     </LinearLayout>
-</LinearLayout>
+</com.inktalk.ime.ui.AdaptiveContentLayout>

@@ -11,7 +11,7 @@ object HotwordCatalog {
     private val defaultGroups = listOf(
         // InkTalk 与个人项目
         """
-        InkTalk
+        inktalk
         SpeakUp
         ThinkInk
         ForNow
@@ -350,11 +350,19 @@ object HotwordCatalog {
      * 火山引擎限制热词与上下文合计最多 100 tokens。客户端无法使用服务端 tokenizer，
      * 因此使用保守的 80-token 估算预算，避免默认词表在服务端被无提示截断。
      */
-    fun forRequest(raw: String, estimatedTokenBudget: Int = REQUEST_TOKEN_BUDGET): List<String> {
+    fun forRequest(
+        raw: String,
+        priorityRaw: String = "",
+        estimatedTokenBudget: Int = REQUEST_TOKEN_BUDGET,
+    ): List<String> {
         require(estimatedTokenBudget > 0) { "estimatedTokenBudget must be positive" }
         var remaining = estimatedTokenBudget
         val selected = ArrayList<String>()
-        parse(raw).forEach { word ->
+        val active = parse(raw)
+        val activeKeys = active.mapTo(HashSet()) { it.lowercase(Locale.ROOT) }
+        val priority = parse(priorityRaw).filter { it.lowercase(Locale.ROOT) in activeKeys }
+        val priorityKeys = priority.mapTo(HashSet()) { it.lowercase(Locale.ROOT) }
+        (priority + active.filter { it.lowercase(Locale.ROOT) !in priorityKeys }).forEach { word ->
             val cost = estimateTokens(word)
             if (cost <= remaining) {
                 selected += word
@@ -393,9 +401,19 @@ object HotwordCatalog {
 
     fun toEditorText(raw: String): String = parse(raw).joinToString("\n")
 
+    fun merge(raw: String, additions: Iterable<String>): List<String> =
+        parse((parse(raw) + additions).joinToString("\n"))
+
+    fun prepend(raw: String, additions: Iterable<String>): List<String> =
+        parse((additions + parse(raw)).joinToString("\n"))
+
     /** 旧版会在保存其他设置时顺带写入空热词，升级时需将这种空值迁移为内置词表。 */
     fun migrateLegacy(raw: String?): String =
         if (raw.isNullOrBlank()) defaultStorageText else normalize(raw)
+
+    fun migrateBrandName(raw: String): String = serialize(
+        parse(raw).map { if (it.equals("InkTalk", ignoreCase = true)) "inktalk" else it }
+    )
 
     private const val REQUEST_TOKEN_BUDGET = 80
 }

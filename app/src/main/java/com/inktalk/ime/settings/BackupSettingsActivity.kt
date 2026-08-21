@@ -30,7 +30,7 @@ class BackupSettingsActivity : Activity() {
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "application/json"
-                putExtra(Intent.EXTRA_TITLE, "InkTalk-settings-${LocalDate.now()}.json")
+                putExtra(Intent.EXTRA_TITLE, "inktalk-settings-${LocalDate.now()}.json")
             }
             startActivityForResult(intent, REQ_EXPORT_SETTINGS)
         }
