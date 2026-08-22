@@ -146,8 +146,8 @@
     <h1>inktalk API 配置与获取指南</h1>
     <p class="lead">语音识别、AI 文本处理与手写识别分别使用不同服务与凭据，本页按服务逐一说明开通、获取与填写方式，以及常见错误的排查方向。</p>
     <div class="meta-row">
-      <span>适用版本：inktalk 0.4.2</span>
-      <span>更新日期：2026 年 8 月 19 日</span>
+      <span>适用版本：inktalk 0.5.6</span>
+      <span>更新日期：2026 年 8 月 21 日</span>
       <span>适用对象：配置与维护人员</span>
     </div>
 
@@ -423,13 +423,13 @@
       <h2>三、Google ML Kit 手写识别</h2>
     </div>
     <p>inktalk 的中英文手写识别使用 Google ML Kit Digital Ink Recognition 19.0.0。该功能不需要申请 API Key，也不需要填写 Base URL。</p>
-    <p>首次选择某种手写语言时，inktalk 会按需下载对应的语言模型。根据 <a href="https://developers.google.com/ml-kit/vision/digital-ink-recognition/android" target="_blank" rel="noopener">Google ML Kit Digital Ink Recognition 官方文档</a>，每种语言模型大约需要 20 MB 存储空间。</p>
+    <p>首次进入手写模式时，inktalk 会准备中文和英文两套语言模型，并并行识别、自动合并候选。根据 <a href="https://developers.google.com/ml-kit/vision/digital-ink-recognition/android" target="_blank" rel="noopener">Google ML Kit Digital Ink Recognition 官方文档</a>，每种语言模型大约需要 20 MB 存储空间。</p>
     <p>使用要求：</p>
     <ul>
       <li>首次下载模型时需要网络连接。</li>
       <li>设备需要能够访问 Google 提供的模型下载服务。</li>
       <li>模型下载完成后，识别过程在设备上执行，不需要用户提供云端 API Key。</li>
-      <li>中文和英文模型分别下载；切换语言时可能触发新的下载。</li>
+      <li>中文和英文模型分别下载；手写页面不再需要手动切换语言。</li>
     </ul>
     <div class="note">若手写页面一直显示准备模型或下载失败，应检查网络、设备存储空间、Google 模型下载服务可达性和系统对后台下载的限制。</div>
   </div>
@@ -482,8 +482,8 @@
     <ul class="checklist">
       <li>不需要申请 API Key。</li>
       <li>首次使用时保持网络可用。</li>
-      <li>为每个需要的语言模型预留约 20 MB 存储空间。</li>
-      <li>等待模型下载完成后再开始书写。</li>
+      <li>为中文和英文两套语言模型分别预留约 20 MB 存储空间。</li>
+      <li>等待两套模型准备完成后再开始书写。</li>
     </ul>
   </div>
 </section>

@@ -6,9 +6,9 @@
 
   [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   [![Android](https://img.shields.io/badge/platform-Android%2026%2B-green.svg)](https://developer.android.com)
-  [![Version](https://img.shields.io/badge/version-0.4.2-orange.svg)](https://github.com/febtancot/InkTalk/releases)
+  [![Version](https://img.shields.io/badge/version-0.5.6-orange.svg)](https://github.com/febtancot/InkTalk/releases)
 
-  [🌐 官网 Website](https://inktalk.liveby.app) · [📖 配置指南](https://inktalk.liveby.app/config-guide.html) · [⬇️ 下载 APK](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk)
+  [🌐 官网 Website](https://inktalk.liveby.app) · [📖 配置指南](https://inktalk.liveby.app/config-guide.html) · [⬇️ 下载 APK](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.5.6-release.apk)
 </div>
 
 ---
@@ -32,10 +32,13 @@ InkTalk 是一款**语音优先**的 Android 输入法。点击即说、实时�
 
 - 🎤 **中英混合与英文优先**：设置为“实时中英混合”时，中英文共用 `bigmodel_async`；设置为“英文优先定稿”时，可在中文与 English 间切换，English 使用 `bigmodel_nostream + en-US`。
 - 🔢 **数字键盘**：点击麦克风左侧的拨号盘图标，直接输入 `0–9`、`00`、小数点、正负号、冒号和斜杠；点击麦克风即可返回语音输入。语音模式栏不再提供“123”数字语音模式。
+- ✍️ **中英文手写**：中文和英文 ML Kit 模型并行识别并自动合并候选，不需要手动切换语言；固定候选栏避免识别结果出现时画板跳动。
 - 🔥 **每日热词与纠错候选**：每条原始记录可按字展开，支持选择一个或多个片段并加入热词；当日整理会生成待确认候选。InkTalk 还会记录可验证的删除与后续输入，将短文本变化显示为可能纠错，用户确认后才加入。
 - 🚀 **用户热词优先**：用户确认的热词优先占用 ASR 热词预算，内置词使用剩余预算；已有自定义词表和主动清空状态保持不变。
 - ⬇️ **安全在线更新**：设置页可检查官网更新清单；APK 下载后必须通过 SHA-256、包名和当前签名证书校验，再交由 Android 系统确认安装。
 - ⌨️ **常用编辑键**：工具栏在回车后提供空格键；设置入口位于键盘右下角。
+- 📐 **可选极限高度**：默认语音模式可压缩到 `128dp`，保留顶部功能栏、麦克风与设置按钮；快捷键恢复 `240dp`，数字键盘和手写恢复 `340dp`。窄屏中模式胶囊保留在左下角，空间足够时才移到顶部。
+- 👐 **内屏单手布局**：内屏横屏极限模式可把单排工具栏、麦克风和设置集中到左侧或右侧，并持久保存选择；内屏竖屏恢复外屏式布局，避免半屏空间不足。
 - ⚡ **低延迟**：使用官方推荐的双向流式优化版端点（bigmodel_async），200 ms 音频分包，结果变化才下发。
 - ☀️ **识别期间常亮**：从连接开始到最终结果返回期间阻止系统因无操作自动息屏；会话结束后恢复系统策略。
 - 🧠 **AI 文本处理**：优先对编辑框中当前选中的文本执行总结 / 中英互译 / 整理；没有选中文本时处理本次语音内容。接入任意 OpenAI 兼容 API，可选择追加结果或直接替换原文。
@@ -119,8 +122,8 @@ app/src/main/java/com/inktalk/ime/
 |------|------|
 | 官网 | https://inktalk.liveby.app |
 | 配置指南 | https://inktalk.liveby.app/config-guide.html |
-| APK 下载 | [inktalk v0.4.2](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk) |
-| 产品发布说明 | [InkTalk 0.2.0 产品发布说明](output/InkTalk-0.2.0-产品发布说明.md) |
+| APK 下载 | [inktalk v0.5.6](https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.5.6-release.apk) |
+| 产品发布说明 | [InkTalk 0.5.6 产品发布说明](output/InkTalk-0.5.6-内屏单手布局说明.md) |
 | API 配置指南 | [API 配置与获取指南](output/InkTalk-API-配置与获取指南.md) |
 
 ## 开源协议

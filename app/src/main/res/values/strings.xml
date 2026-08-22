@@ -35,10 +35,8 @@
     <string name="a11y_disable_handwriting">关闭手写输入</string>
     <string name="a11y_enable_numeric_keypad">开启数字键盘</string>
     <string name="a11y_disable_numeric_keypad">关闭数字键盘</string>
-    <string name="a11y_handwriting_pad">手写区域，可使用手指或触控笔书写</string>
+    <string name="a11y_handwriting_pad">中英文手写区域，可使用手指或触控笔书写</string>
     <string name="a11y_clear_handwriting">清除当前手写内容</string>
-    <string name="a11y_handwriting_chinese">使用简体中文手写识别</string>
-    <string name="a11y_handwriting_english">使用英文手写识别</string>
     <string name="a11y_switch_keyboard">切换到下一个输入法，长按选择输入法</string>
     <string name="a11y_delete">删除，长按可连续删除</string>
     <string name="a11y_enter">换行</string>
@@ -46,6 +44,8 @@
     <string name="a11y_settings">打开 inktalk 设置</string>
     <string name="a11y_wide_ime_move_content_left">将输入内容区移到左侧</string>
     <string name="a11y_wide_ime_move_content_right">将输入内容区移到右侧</string>
+    <string name="a11y_extreme_controls_move_left">将极限模式控制区移到左侧</string>
+    <string name="a11y_extreme_controls_move_right">将极限模式控制区移到右侧</string>
     <string name="a11y_hide_keyboard">收起键盘</string>
     <string name="a11y_mode_chinese">中文语音输入</string>
     <string name="a11y_mode_bilingual">中英文混合语音输入</string>
@@ -88,10 +88,9 @@
     <string name="key_paste">粘贴\n<small>Ctrl+V</small></string>
     <string name="key_undo">撤销\n<small>Ctrl+Z</small></string>
     <string name="handwriting_clear">清除</string>
-    <string name="handwriting_language_chinese">中文</string>
-    <string name="handwriting_language_english" translatable="false">English</string>
-    <string name="handwriting_preparing">正在准备手写识别模型…</string>
-    <string name="handwriting_ready">请在上方区域手写</string>
+    <string name="handwriting_preparing">正在准备中英文手写识别模型…</string>
+    <string name="handwriting_ready">请在这里手写</string>
+    <string name="handwriting_partial_ready">部分手写模型暂不可用，仍可继续书写</string>
     <string name="handwriting_recognizing">正在识别手写内容…</string>
     <string name="handwriting_no_result">未识别出文字，请清除后重试</string>
     <string name="handwriting_error">手写识别出错：%1$s</string>
@@ -105,6 +104,10 @@
     <string name="settings_enable_ime">1  启用 inktalk 输入法</string>
     <string name="settings_pick_ime">2  切换到 inktalk</string>
     <string name="settings_mic_permission">3  授予录音权限</string>
+    <string name="settings_layout_section">输入法布局</string>
+    <string name="settings_layout_description">控制输入法窗口在默认语音模式下占用的空间。</string>
+    <string name="settings_extreme_height_title">极限高度模式</string>
+    <string name="settings_extreme_height_description">默认语音页仅保留顶部功能栏、麦克风和设置按钮。空间足够时，数字与手写入口移到顶部；窄屏中仍保留在左下角。切换到快捷键、数字键盘或手写后恢复原高度，返回语音时再次收起。</string>
     <string name="history_title">每日输入记录</string>
     <string name="history_settings">设置</string>
     <string name="history_settings_description">打开输入法设置</string>

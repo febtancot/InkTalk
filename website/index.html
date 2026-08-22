@@ -205,6 +205,15 @@
   @media (max-width: 720px) { .limits { grid-template-columns: 1fr; } }
   .limits li { margin-bottom: 6px; }
 
+  /* ---------- 更新日志 ---------- */
+  .release-log { max-width: 860px; }
+  .release-log + .release-log { margin-top: 18px; }
+  .release-title { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 14px; flex-wrap: wrap; }
+  .release-title h3 { font-size: 22px; }
+  .release-title span { color: var(--ink-muted); font-size: 13.5px; }
+  .release-list { padding-left: 20px; color: var(--ink-soft); font-size: 14.5px; }
+  .release-list li { margin-bottom: 7px; }
+
   /* ---------- 下载 / 页脚 ---------- */
   .download { text-align: center; }
   .download h2 { font-size: 30px; margin-bottom: 12px; }
@@ -226,6 +235,7 @@
       <a href="#start">快速开始</a>
       <a href="config-guide.html">配置指南</a>
       <a href="#privacy">隐私</a>
+      <a href="#updates">更新日志</a>
       <a href="#download">下载</a>
       <a href="https://github.com/febtancot/inktalk" target="_blank" rel="noopener">GitHub</a>
     </div>
@@ -334,7 +344,7 @@
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M20.7 5.6a1 1 0 0 0 0-1.4l-1.9-1.9a1 1 0 0 0-1.4 0L3 16.7V21h4.3L20.7 7a1 1 0 0 0 0-1.4zM6 19H5v-1l9.9-9.9 1 1L6 19z"/></svg></div>
         <h3>手写输入 · 语音的精修搭档</h3>
-        <p>基于 ML Kit 数字墨迹识别，支持简体中文与英文，模型按语言下载后离线可用。与语音配合，是局部修改的最佳方案：手写定位，语音改法。</p>
+        <p>基于 ML Kit 数字墨迹识别，中文和英文模型并行运行并自动合并候选，不需要手动切换语言。模型下载后可离线识别。</p>
       </div>
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h3v3H6V3zm5 0h3v3h-3V3zm5 0h3v3h-3V3zM6 8h3v3H6V8zm5 0h3v3h-3V8zm5 0h3v3h-3V8zM6 13h3v3H6v-3zm5 0h3v3h-3v-3zm5 0h3v3h-3v-3zm5 5h-8v3h8v-3z"/></svg></div>
@@ -386,7 +396,7 @@
       <div class="card">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm4 6h2v-2H7v2zM3 17h2v-2H3v2zm0-8h2V7H3v2zm12 10h2v-2h-2v2zM19 7h2V5h-2v2zm0 10h2v-2h-2v2zM11 21h2V3h-2v18zm8-8h2v-2h-2v2zm-4-4h2V7h-2v2zm4 0h2V7h-2v2z"/></svg></div>
         <h3>① 语音识别 · 火山引擎</h3>
-        <p>豆包流式语音识别大模型 2.0（SAUC 二进制协议，WebSocket + gzip）。16 kHz 单声道 PCM 以 200 ms 分片上行，async 端点专属二遍识别负责最终定稿；单次会话最长 120 秒，超时自动结束。</p>
+        <p>豆包流式语音识别大模型 2.0（SAUC 二进制协议，WebSocket + gzip）。16 kHz 单声道 PCM 以 200 ms 分片上行，async 端点专属二遍识别负责最终定稿。</p>
       </div>
       <div class="arrow">→</div>
       <div class="card">
@@ -447,6 +457,67 @@
   </div>
 </section>
 
+<section id="updates">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">更新日志</div>
+      <h2>最近更新</h2>
+      <p>查看当前版本及近期界面、识别和输入体验调整。</p>
+    </div>
+    <div class="card release-log">
+      <div class="release-title">
+        <h3>0.5.6 · 内屏单手布局</h3>
+        <span>2026 年 8 月 22 日</span>
+      </div>
+      <ul class="release-list">
+        <li>内屏横屏的极限语音模式新增单手布局，单排工具栏、麦克风和设置按钮集中在同一侧。</li>
+        <li>新增左右切换按钮，控制区可整体镜像到左侧或右侧，并持久保存选择。</li>
+        <li>工具栏继续使用 AI 按钮横向滚动、编辑图标固定的单排结构，避免半屏内重叠。</li>
+        <li>内屏竖屏恢复外屏式极限布局：左下角保留模式胶囊，麦克风居中，设置位于右下角。</li>
+        <li>手机极限模式改为按 AI 按钮实际宽度、固定图标和安全间距判断是否迁移模式按钮。</li>
+      </ul>
+    </div>
+    <div class="card release-log">
+      <div class="release-title">
+        <h3>0.5.5 · 极限高度与模式自适应</h3>
+        <span>2026 年 8 月 22 日</span>
+      </div>
+      <ul class="release-list">
+        <li>默认语音面板从 340dp 收紧到 240dp，并新增可即时生效的极限高度模式。</li>
+        <li>极限语音模式压缩到 128dp，同时保留顶部功能栏、麦克风和右下角设置按钮。</li>
+        <li>切换到快捷键时恢复 240dp；切换到数字键盘或手写时恢复 340dp，返回语音后再次收起。</li>
+        <li>空间足够时，数字与手写入口移到顶部；窄屏、窄分屏中保留原来的左下角模式胶囊，避免顶部功能区拥挤。</li>
+        <li>修复极限模式开关未即时生效，以及麦克风、设置按钮被父容器一并隐藏的问题。</li>
+      </ul>
+    </div>
+    <div class="card release-log">
+      <div class="release-title">
+        <h3>0.5.3 · 扩大手写区域</h3>
+        <span>2026 年 8 月 21 日</span>
+      </div>
+      <ul class="release-list">
+        <li>回收画板下方的外部状态栏，增加手机、外屏和窄分屏中的可写高度。</li>
+        <li>缩小手写面板四周留白，进一步扩大有效书写范围。</li>
+        <li>模型准备、识别中和错误状态统一显示在手写框内部。</li>
+        <li>候选栏继续保留固定高度，避免候选出现或消失时画板跳动。</li>
+      </ul>
+    </div>
+    <div class="card release-log">
+      <div class="release-title">
+        <h3>0.5.2 · 内屏与手写体验优化</h3>
+        <span>2026 年 8 月 21 日</span>
+      </div>
+      <ul class="release-list">
+        <li>宽屏输入法改为左右分区，并支持交换输入内容区与控制区的位置。</li>
+        <li>修复手写候选出现或消失时画板上下跳动的问题。</li>
+        <li>中文和英文手写模型并行识别，候选自动合并，不再显示语言切换按钮。</li>
+        <li>手写提示移入画板中央，语音按钮缩小到更紧凑的尺寸。</li>
+        <li>首次直接在折叠屏内屏打开输入法时，使用真实窗口尺寸重新计算布局。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <section id="limits">
   <div class="wrap">
     <div class="sec-head">
@@ -454,7 +525,7 @@
       <h2>使用前请了解</h2>
     </div>
     <ul class="limits">
-      <li>语音识别单次会话最长 120 秒，超时自动结束。</li>
+      <li>inktalk 不设置本地 120 秒会话上限；连接仍可能因服务端策略、网络或系统资源状态结束。</li>
       <li>「实时中英混合」不严格过滤中文；「英文优先定稿」仍可能返回中文内容。</li>
       <li>指令模式依赖宿主应用提供完整文本与选区，部分应用可能不支持。</li>
       <li>快捷键面板的「撤销」发送 Ctrl+Z 按键事件，是否生效取决于目标应用。</li>
@@ -470,7 +541,7 @@
     <h2>让说话的速度，成为打字的速度</h2>
     <p>inktalk 为个人项目，可自行构建 APK 安装使用。接入需自备火山引擎语音识别凭据；AI 功能支持任意 OpenAI 兼容服务。</p>
     <div class="cta" style="justify-content:center;display:flex;gap:14px;flex-wrap:wrap;">
-      <a class="btn btn-primary" href="https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk" download>下载 inktalk（v0.4.2 · 33 MB）</a>
+      <a class="btn btn-primary" href="https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.5.6-release.apk" download>下载 inktalk（v0.5.6 · 33 MB）</a>
       <a class="btn btn-ghost" href="#start">查看快速开始</a>
     </div>
   </div>

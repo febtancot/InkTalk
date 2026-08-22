@@ -2,12 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="340dp"
+    android:layout_height="240dp"
     android:baselineAligned="false"
     android:orientation="vertical"
     android:background="@color/panel_bg">
 
     <LinearLayout
+        android:id="@+id/topToolbar"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
@@ -23,6 +24,7 @@
             android:fillViewport="true"
             android:scrollbars="none">
             <LinearLayout
+                android:id="@+id/aiActionRow"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
@@ -51,6 +53,7 @@
         </HorizontalScrollView>
 
         <LinearLayout
+            android:id="@+id/toolbarActionGroup"
             android:layout_width="wrap_content"
             android:layout_height="38dp"
             android:orientation="horizontal"
@@ -159,9 +162,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:paddingStart="10dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="10dp"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="6dp"
                     android:visibility="gone">
 
                     <HorizontalScrollView
@@ -171,7 +174,7 @@
                         android:layout_marginBottom="4dp"
                         android:fillViewport="true"
                         android:scrollbars="none"
-                        android:visibility="gone">
+                        android:visibility="invisible">
                         <LinearLayout
                             android:id="@+id/handwritingCandidates"
                             android:layout_width="wrap_content"
@@ -189,29 +192,19 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:background="@drawable/bg_handwriting_pad" />
-                        <LinearLayout
-                            android:id="@+id/handwritingLanguageGroup"
+
+                        <TextView
+                            android:id="@+id/textHandwritingHint"
                             android:layout_width="wrap_content"
-                            android:layout_height="38dp"
-                            android:layout_gravity="top|start"
-                            android:layout_margin="6dp"
-                            android:orientation="horizontal"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:gravity="center"
-                            android:padding="3dp"
-                            android:background="@drawable/bg_mode_group">
-                            <TextView
-                                android:id="@+id/btnHandwritingChinese"
-                                style="@style/InputModeButton"
-                                android:layout_width="64dp"
-                                android:text="@string/handwriting_language_chinese"
-                                android:contentDescription="@string/a11y_handwriting_chinese" />
-                            <TextView
-                                android:id="@+id/btnHandwritingEnglish"
-                                style="@style/InputModeButton"
-                                android:layout_width="72dp"
-                                android:text="@string/handwriting_language_english"
-                                android:contentDescription="@string/a11y_handwriting_english" />
-                        </LinearLayout>
+                            android:paddingHorizontal="16dp"
+                            android:text="@string/handwriting_ready"
+                            android:textColor="@color/text_hint"
+                            android:textSize="14sp"
+                            android:visibility="gone" />
+
                         <TextView
                             android:id="@+id/btnClearHandwriting"
                             android:layout_width="wrap_content"
@@ -302,6 +295,7 @@
                     android:layout_gravity="center"
                     android:clipChildren="false">
                     <FrameLayout
+                        android:id="@+id/voicePurposeModePill"
                         android:layout_width="124dp"
                         android:layout_height="44dp"
                         android:layout_gravity="start|center_vertical"
@@ -315,6 +309,7 @@
                             android:layout_gravity="start|center_vertical"
                             android:background="@drawable/bg_mode_selected" />
                         <LinearLayout
+                            android:id="@+id/voicePurposeButtonRow"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:orientation="horizontal"
@@ -338,10 +333,10 @@
                     </FrameLayout>
                     <ImageButton
                         android:id="@+id/btnMic"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
                         android:layout_gravity="center"
-                        android:padding="19dp"
+                        android:padding="16dp"
                         android:src="@drawable/ic_mic_white"
                         android:background="@drawable/bg_mic_button"
                         android:contentDescription="@string/a11y_start_recording"
@@ -372,6 +367,19 @@
                         style="@style/InstructionPrimaryAction"
                         android:text="@string/instruction_apply" />
                 </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnExtremeSideSwap"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_material_swap_24"
+                    android:tint="@color/icon_primary"
+                    android:background="@drawable/bg_icon_button"
+                    android:contentDescription="@string/a11y_extreme_controls_move_left"
+                    android:visibility="gone"
+                    tools:ignore="UseAppTint" />
 
                 <ImageButton
                     android:id="@+id/btnSettings"

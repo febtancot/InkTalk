@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "versionCode": 6,
-  "versionName": "0.4.2",
-  "apkUrl": "https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.4.2-release.apk",
-  "sha256": "2d56ecb57a54667b8e1604c627d605ff5f0b4fd26e2893f73ceec7bf7a2f9550",
-  "releaseNotes": "热词支持按住滑动连续选择；最新加入的热词默认置顶，并获得最高 ASR 请求优先级。"
+  "versionCode": 13,
+  "versionName": "0.5.6",
+  "apkUrl": "https://pub-f7277fb77b4246769bf8ad8e93fb834d.r2.dev/InkTalk-0.5.6-release.apk",
+  "sha256": "6d9c9333be4591ae7e0e882c882e8aa088cd0a9593709601e866b9900a82b119",
+  "releaseNotes": "内屏横屏极限模式新增左右手单排布局，工具栏、麦克风和设置按钮可整体切换侧边；内屏竖屏恢复外屏式布局；手机按实际按钮宽度判断顶部迁移，避免功能区重叠。"
 }

@@ -80,6 +80,22 @@
                 android:drawableStart="@drawable/ic_material_mic_24" />
         </LinearLayout>
 
+        <TextView style="@style/SettingsSection" android:text="@string/settings_layout_section" />
+        <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_layout_description" />
+        <LinearLayout style="@style/SettingsCard">
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_extreme_height_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_extreme_height_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchExtremeHeight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/settings_extreme_height_title" />
+            </LinearLayout>
+        </LinearLayout>
+
         <TextView style="@style/SettingsSection" android:text="@string/settings_asr_section" />
         <TextView style="@style/SettingsSectionDescription" android:text="@string/settings_asr_description" />
         <LinearLayout style="@style/SettingsCard">
