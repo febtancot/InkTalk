@@ -91,4 +91,32 @@ class HotwordCatalogTest {
             HotwordCatalog.prepend("旧词，第二个", listOf("最新词", "第二个")),
         )
     }
+
+    @Test
+    fun customAndDefaultLayersStaySeparateAndVisible() {
+        val custom = HotwordCatalog.customFromLegacyCombined(
+            "用户新词，OpenAI，另一个词",
+        )
+        val combined = HotwordCatalog.combineCustomWithDefaults(
+            HotwordCatalog.serialize(custom),
+        )
+
+        assertEquals(listOf("用户新词", "另一个词"), custom)
+        assertEquals(listOf("用户新词", "另一个词"), combined.take(2))
+        assertEquals(HotwordCatalog.defaultWords.size + 2, combined.size)
+        assertTrue("OpenAI" in combined)
+        assertTrue("IELTS Academic" in combined)
+    }
+
+    @Test
+    fun migrationRestoresDefaultsWhenLegacyListContainsOnlyManualWords() {
+        val custom = HotwordCatalog.customFromLegacyCombined("手动热词")
+        val combined = HotwordCatalog.combineCustomWithDefaults(
+            HotwordCatalog.serialize(custom),
+        )
+
+        assertEquals("手动热词", combined.first())
+        assertEquals(HotwordCatalog.defaultWords.size + 1, combined.size)
+        assertTrue(HotwordCatalog.defaultWords.all { it in combined })
+    }
 }

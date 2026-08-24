@@ -19,6 +19,7 @@ import com.inktalk.ime.history.InputHistoryStore
 class HotwordSettingsActivity : Activity() {
     private lateinit var editor: EditText
     private lateinit var countView: TextView
+    private lateinit var defaultListView: TextView
     private lateinit var candidateTitle: TextView
     private lateinit var candidateScroll: View
     private lateinit var candidateContainer: LinearLayout
@@ -30,17 +31,17 @@ class HotwordSettingsActivity : Activity() {
 
         editor = findViewById(R.id.editHotwordList)
         countView = findViewById(R.id.textHotwordCount)
+        defaultListView = findViewById(R.id.textDefaultHotwordList)
         candidateTitle = findViewById(R.id.textPendingHotwordCandidates)
         candidateScroll = findViewById(R.id.pendingHotwordCandidateScroll)
         candidateContainer = findViewById(R.id.pendingHotwordCandidates)
 
         findViewById<View>(R.id.btnHotwordsBack).setSystemHapticClick { finish() }
         findViewById<View>(R.id.btnRestoreHotwords).setSystemHapticClick {
-            editor.setText(HotwordCatalog.defaultEditorText)
-            editor.setSelection(editor.text.length)
+            editor.setText("")
         }
         findViewById<View>(R.id.btnSaveHotwords).setSystemHapticClick {
-            val count = Prefs.putHotwords(this, editor.text.toString())
+            val count = Prefs.putCustomHotwords(this, editor.text.toString())
             setResult(RESULT_OK)
             Toast.makeText(
                 this,
@@ -59,9 +60,10 @@ class HotwordSettingsActivity : Activity() {
         })
 
         val restoredDraft = savedInstanceState?.getString(STATE_EDITOR_DRAFT)
-        editor.setText(restoredDraft ?: HotwordCatalog.toEditorText(Prefs.hotwords(this)))
+        editor.setText(restoredDraft ?: HotwordCatalog.toEditorText(Prefs.customHotwords(this)))
         editor.setSelection(savedInstanceState?.getInt(STATE_EDITOR_SELECTION, 0)
             ?.coerceIn(0, editor.text.length) ?: 0)
+        defaultListView.text = HotwordCatalog.defaultEditorText
         updateCount(editor.text.toString())
         renderCandidates()
     }
@@ -121,10 +123,14 @@ class HotwordSettingsActivity : Activity() {
                     renderCandidates()
                 })
                 addView(candidateAction(getString(R.string.history_candidate_add)) {
-                    Prefs.putHotwords(this@HotwordSettingsActivity, editor.text.toString())
+                    Prefs.putCustomHotwords(this@HotwordSettingsActivity, editor.text.toString())
                     Prefs.addPriorityHotwords(this@HotwordSettingsActivity, listOf(candidate.term))
                     historyStore.setCandidateStatus(candidate.id, "added")
-                    editor.setText(HotwordCatalog.toEditorText(Prefs.hotwords(this@HotwordSettingsActivity)))
+                    editor.setText(
+                        HotwordCatalog.toEditorText(
+                            Prefs.customHotwords(this@HotwordSettingsActivity),
+                        ),
+                    )
                     renderCandidates()
                 })
             })
@@ -150,7 +156,13 @@ class HotwordSettingsActivity : Activity() {
     }
 
     private fun updateCount(raw: String) {
-        countView.text = getString(R.string.hotwords_count, HotwordCatalog.parse(raw).size)
+        val customCount = HotwordCatalog.customFromLegacyCombined(raw).size
+        countView.text = getString(
+            R.string.hotwords_count,
+            customCount,
+            HotwordCatalog.defaultWords.size,
+            customCount + HotwordCatalog.defaultWords.size,
+        )
     }
 
     private fun View.setSystemHapticClick(action: () -> Unit) {

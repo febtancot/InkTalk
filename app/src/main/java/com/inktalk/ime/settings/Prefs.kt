@@ -15,13 +15,14 @@ object Prefs {
     private const val EXPORT_VERSION = 1
     private const val MAX_EXPORTED_STRING_CHARS = 20_000
     private const val KEY_HOTWORDS_DEFAULTS_VERSION = "asr_hotwords_defaults_version"
-    private const val HOTWORDS_DEFAULTS_VERSION = 2
+    private const val HOTWORDS_DEFAULTS_VERSION = 3
     private const val KEY_ASR_UID = "asr_install_uid"
 
     const val KEY_API_KEY = "asr_api_key"
     const val KEY_APP_KEY = "asr_app_key"
     const val KEY_ACCESS_KEY = "asr_access_key"
     const val KEY_HOTWORDS = "asr_hotwords"
+    const val KEY_CUSTOM_HOTWORDS = "asr_custom_hotwords"
     const val KEY_PRIORITY_HOTWORDS = "asr_priority_hotwords"
     const val KEY_ENABLE_DDC = "asr_enable_ddc"
     const val KEY_ENABLE_PUNC = "asr_enable_punc"
@@ -93,49 +94,78 @@ object Prefs {
         return generated
     }
 
-    /** 旧版空值一次性迁移为内置词表；迁移后用户主动保存空词表仍保持为空。 */
-    fun hotwords(context: Context): String {
+    /**
+     * 将旧版单一总列表迁移为「用户热词 + 始终启用的内置热词」。旧列表中不属于
+     * 内置词表的内容会保留为用户热词；缺失的内置词会在组合列表中自动补齐。
+     */
+    private fun ensureHotwordModel(context: Context): SharedPreferences {
         val preferences = sp(context)
         val version = preferences.getInt(KEY_HOTWORDS_DEFAULTS_VERSION, 0)
         if (version < HOTWORDS_DEFAULTS_VERSION) {
             var migrated = preferences.getString(KEY_HOTWORDS, null)
             if (version < 1) migrated = HotwordCatalog.migrateLegacy(migrated)
             if (version < 2) migrated = HotwordCatalog.migrateBrandName(migrated.orEmpty())
+            val custom = HotwordCatalog.customFromLegacyCombined(migrated.orEmpty())
+            val combined = HotwordCatalog.combineCustomWithDefaults(
+                HotwordCatalog.serialize(custom),
+            )
+            val activeKeys = combined.mapTo(HashSet()) { it.lowercase() }
+            val priority = HotwordCatalog.parse(
+                preferences.getString(KEY_PRIORITY_HOTWORDS, "").orEmpty(),
+            ).filter { it.lowercase() in activeKeys }
             preferences.edit()
-                .putString(KEY_HOTWORDS, migrated)
+                .putString(KEY_CUSTOM_HOTWORDS, HotwordCatalog.serialize(custom))
+                .putString(KEY_HOTWORDS, HotwordCatalog.serialize(combined))
+                .putString(KEY_PRIORITY_HOTWORDS, HotwordCatalog.serialize(priority))
                 .putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
                 .apply()
-            return migrated.orEmpty()
         }
-        return get(context, KEY_HOTWORDS)
+        return preferences
     }
 
-    fun putHotwords(context: Context, raw: String): Int {
-        val words = HotwordCatalog.parse(raw)
-        val activeKeys = words.mapTo(HashSet()) { it.lowercase() }
-        val priority = HotwordCatalog.parse(get(context, KEY_PRIORITY_HOTWORDS))
+    fun customHotwords(context: Context): String =
+        ensureHotwordModel(context).getString(KEY_CUSTOM_HOTWORDS, "").orEmpty()
+
+    fun hotwords(context: Context): String = HotwordCatalog.serialize(
+        HotwordCatalog.combineCustomWithDefaults(customHotwords(context)),
+    )
+
+    fun putCustomHotwords(context: Context, raw: String): Int {
+        val custom = HotwordCatalog.customFromLegacyCombined(raw)
+        val combined = HotwordCatalog.combineCustomWithDefaults(HotwordCatalog.serialize(custom))
+        val activeKeys = combined.mapTo(HashSet()) { it.lowercase() }
+        val preferences = ensureHotwordModel(context)
+        val priority = HotwordCatalog.parse(
+            preferences.getString(KEY_PRIORITY_HOTWORDS, "").orEmpty(),
+        )
             .filter { it.lowercase() in activeKeys }
-        sp(context).edit()
-            .putString(KEY_HOTWORDS, HotwordCatalog.serialize(words))
+        preferences.edit()
+            .putString(KEY_CUSTOM_HOTWORDS, HotwordCatalog.serialize(custom))
+            .putString(KEY_HOTWORDS, HotwordCatalog.serialize(combined))
             .putString(KEY_PRIORITY_HOTWORDS, HotwordCatalog.serialize(priority))
             .putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
             .apply()
-        return words.size
+        return custom.size
     }
 
     data class HotwordAddResult(val added: List<String>, val duplicates: List<String>)
 
     fun addPriorityHotwords(context: Context, additions: Iterable<String>): HotwordAddResult {
-        val current = HotwordCatalog.parse(hotwords(context))
-        val currentKeys = current.mapTo(HashSet()) { it.lowercase() }
+        val custom = HotwordCatalog.parse(customHotwords(context))
+        val active = HotwordCatalog.combineCustomWithDefaults(HotwordCatalog.serialize(custom))
+        val activeKeys = active.mapTo(HashSet()) { it.lowercase() }
         val requested = HotwordCatalog.parse(additions.joinToString("\n"))
-        val added = requested.filter { it.lowercase() !in currentKeys }
-        val duplicates = requested.filter { it.lowercase() in currentKeys }
-        val merged = HotwordCatalog.prepend(HotwordCatalog.serialize(current), added)
+        val added = requested.filter { it.lowercase() !in activeKeys }
+        val duplicates = requested.filter { it.lowercase() in activeKeys }
+        val mergedCustom = HotwordCatalog.prepend(HotwordCatalog.serialize(custom), added)
+        val combined = HotwordCatalog.combineCustomWithDefaults(
+            HotwordCatalog.serialize(mergedCustom),
+        )
         // 用户再次确认内置或已有热词时，也应提升其请求优先级。
         val priority = HotwordCatalog.prepend(get(context, KEY_PRIORITY_HOTWORDS), requested)
         sp(context).edit()
-            .putString(KEY_HOTWORDS, HotwordCatalog.serialize(merged))
+            .putString(KEY_CUSTOM_HOTWORDS, HotwordCatalog.serialize(mergedCustom))
+            .putString(KEY_HOTWORDS, HotwordCatalog.serialize(combined))
             .putString(KEY_PRIORITY_HOTWORDS, HotwordCatalog.serialize(priority))
             .putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
             .apply()
@@ -167,6 +197,7 @@ object Prefs {
         settings.put(KEY_APP_KEY, get(context, KEY_APP_KEY))
         settings.put(KEY_ACCESS_KEY, get(context, KEY_ACCESS_KEY))
         settings.put(KEY_HOTWORDS, hotwords(context))
+        settings.put(KEY_CUSTOM_HOTWORDS, customHotwords(context))
         settings.put(KEY_PRIORITY_HOTWORDS, get(context, KEY_PRIORITY_HOTWORDS))
         settings.put(KEY_ENABLE_DDC, getBool(context, KEY_ENABLE_DDC, false))
         settings.put(KEY_ENABLE_PUNC, getBool(context, KEY_ENABLE_PUNC, true))
@@ -251,10 +282,34 @@ object Prefs {
             }
         }
 
+        val importedCustom = when {
+            KEY_CUSTOM_HOTWORDS in stringValues -> HotwordCatalog.customFromLegacyCombined(
+                stringValues.getValue(KEY_CUSTOM_HOTWORDS),
+            )
+            KEY_HOTWORDS in stringValues -> HotwordCatalog.customFromLegacyCombined(
+                stringValues.getValue(KEY_HOTWORDS),
+            )
+            else -> null
+        }
+        if (importedCustom != null) {
+            val customRaw = HotwordCatalog.serialize(importedCustom)
+            stringValues[KEY_CUSTOM_HOTWORDS] = customRaw
+            stringValues[KEY_HOTWORDS] = HotwordCatalog.serialize(
+                HotwordCatalog.combineCustomWithDefaults(customRaw),
+            )
+            val activeKeys = HotwordCatalog.parse(stringValues.getValue(KEY_HOTWORDS))
+                .mapTo(HashSet()) { it.lowercase() }
+            val importedPriority = stringValues[KEY_PRIORITY_HOTWORDS]
+                ?: get(context, KEY_PRIORITY_HOTWORDS)
+            stringValues[KEY_PRIORITY_HOTWORDS] = HotwordCatalog.serialize(
+                HotwordCatalog.parse(importedPriority).filter { it.lowercase() in activeKeys },
+            )
+        }
+
         val editor = sp(context).edit()
         stringValues.forEach { (key, value) -> editor.putString(key, value) }
         booleanValues.forEach { (key, value) -> editor.putBoolean(key, value) }
-        if (KEY_HOTWORDS in stringValues) {
+        if (KEY_HOTWORDS in stringValues || KEY_CUSTOM_HOTWORDS in stringValues) {
             editor.putInt(KEY_HOTWORDS_DEFAULTS_VERSION, HOTWORDS_DEFAULTS_VERSION)
         }
         if (!editor.commit()) throw ImportException("配置写入失败")
@@ -266,6 +321,7 @@ object Prefs {
         KEY_APP_KEY,
         KEY_ACCESS_KEY,
         KEY_HOTWORDS,
+        KEY_CUSTOM_HOTWORDS,
         KEY_PRIORITY_HOTWORDS,
         KEY_INPUT_MODE,
         KEY_ENGLISH_RECOGNITION_STRATEGY,

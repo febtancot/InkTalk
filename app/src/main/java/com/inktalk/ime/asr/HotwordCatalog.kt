@@ -401,6 +401,16 @@ object HotwordCatalog {
 
     fun toEditorText(raw: String): String = parse(raw).joinToString("\n")
 
+    /** 用户热词在前，内置热词随后补齐；两组之间仍按大小写不敏感规则去重。 */
+    fun combineCustomWithDefaults(customRaw: String): List<String> =
+        parse((parse(customRaw) + defaultWords).joinToString("\n"))
+
+    /** 从旧版的单一总列表中提取用户新增词，用于升级到分层热词模型。 */
+    fun customFromLegacyCombined(raw: String): List<String> {
+        val defaultKeys = defaultWords.mapTo(HashSet()) { it.lowercase(Locale.ROOT) }
+        return parse(raw).filter { it.lowercase(Locale.ROOT) !in defaultKeys }
+    }
+
     fun merge(raw: String, additions: Iterable<String>): List<String> =
         parse((parse(raw) + additions).joinToString("\n"))
 
