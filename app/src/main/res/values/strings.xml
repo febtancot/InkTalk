@@ -35,6 +35,8 @@
     <string name="a11y_disable_handwriting">关闭手写输入</string>
     <string name="a11y_enable_numeric_keypad">开启数字键盘</string>
     <string name="a11y_disable_numeric_keypad">关闭数字键盘</string>
+    <string name="a11y_enable_full_keyboard">开启全键盘</string>
+    <string name="a11y_disable_full_keyboard">关闭全键盘</string>
     <string name="a11y_handwriting_pad">中英文手写区域，可使用手指或触控笔书写</string>
     <string name="a11y_clear_handwriting">清除当前手写内容</string>
     <string name="a11y_switch_keyboard">切换到下一个输入法，长按选择输入法</string>
@@ -60,6 +62,10 @@
     <string name="a11y_down">向下</string>
     <string name="a11y_right">向右</string>
     <string name="numeric_keypad_hint">点击按键直接输入数字，点击麦克风返回语音</string>
+    <string name="full_keyboard_hint">全键盘支持中文拼音、英文、数字和符号</string>
+    <string name="full_keyboard_loading_dictionary">正在加载本地拼音词典…</string>
+    <string name="full_keyboard_dictionary_failed">拼音词典加载失败，仍可输入英文、数字和符号</string>
+    <string name="full_keyboard_candidate">拼音候选：%1$s</string>
     <string name="numeric_key_0" translatable="false">0</string>
     <string name="numeric_key_1" translatable="false">1</string>
     <string name="numeric_key_2" translatable="false">2</string>
@@ -105,9 +111,11 @@
     <string name="settings_pick_ime">2  切换到 inktalk</string>
     <string name="settings_mic_permission">3  授予录音权限</string>
     <string name="settings_layout_section">输入法布局</string>
-    <string name="settings_layout_description">控制输入法窗口在默认语音模式下占用的空间。</string>
+    <string name="settings_layout_description">控制输入法窗口高度和辅助键盘入口。</string>
     <string name="settings_extreme_height_title">极限高度模式</string>
-    <string name="settings_extreme_height_description">默认语音页仅保留顶部功能栏、麦克风和设置按钮。空间足够时，数字与手写入口移到顶部；窄屏中仍保留在左下角。切换到快捷键、数字键盘或手写后恢复原高度，返回语音时再次收起。</string>
+    <string name="settings_extreme_height_description">默认语音页仅保留顶部功能栏、麦克风和设置按钮。空间足够时，辅助键盘与手写入口移到顶部；窄屏中仍保留在左下角。切换到快捷键、辅助键盘或手写后恢复原高度，返回语音时再次收起。</string>
+    <string name="settings_full_keyboard_title">启用全键盘</string>
+    <string name="settings_full_keyboard_description">开启后，全键盘入口会替代语音页原来的数字键盘入口；可输入中文拼音、英文、数字和符号。关闭后恢复数字键盘。</string>
     <string name="history_title">每日输入记录</string>
     <string name="history_settings">设置</string>
     <string name="history_settings_description">打开输入法设置</string>
@@ -141,6 +149,7 @@
     <string name="history_source_voice">语音</string>
     <string name="history_source_handwriting">手写</string>
     <string name="history_source_numeric_keypad">数字键盘</string>
+    <string name="history_source_full_keyboard">全键盘</string>
     <string name="history_source_instruction">指令</string>
     <string name="history_source_ai">AI 处理</string>
     <string name="history_select_hotwords">选择热词</string>

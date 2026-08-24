@@ -94,6 +94,18 @@
                     android:layout_height="wrap_content"
                     android:contentDescription="@string/settings_extreme_height_title" />
             </LinearLayout>
+            <View style="@style/SettingsDivider" />
+            <LinearLayout style="@style/SettingsSwitchRow">
+                <LinearLayout style="@style/SettingsSwitchCopy">
+                    <TextView style="@style/SettingsSwitchTitle" android:text="@string/settings_full_keyboard_title" />
+                    <TextView style="@style/SettingsSwitchDescription" android:text="@string/settings_full_keyboard_description" />
+                </LinearLayout>
+                <Switch
+                    android:id="@+id/switchFullKeyboard"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/settings_full_keyboard_title" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView style="@style/SettingsSection" android:text="@string/settings_asr_section" />

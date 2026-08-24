@@ -63,28 +63,28 @@
             <ImageButton
                 android:id="@+id/btnCmd"
                 style="@style/ToolbarIconButton"
-                android:src="@drawable/ic_material_terminal_24"
+                android:src="@drawable/ic_tabler_terminal_2_24"
                 android:contentDescription="@string/a11y_shortcuts" />
             <ImageButton
                 android:id="@+id/btnDelete"
                 style="@style/ToolbarIconButton"
-                android:padding="9dp"
-                android:src="@drawable/ic_material_backspace_24"
+                android:padding="8dp"
+                android:src="@drawable/ic_tabler_backspace_24"
                 android:contentDescription="@string/a11y_delete" />
             <ImageButton
                 android:id="@+id/btnEnter"
                 style="@style/ToolbarIconButton"
-                android:src="@drawable/ic_material_keyboard_return_24"
+                android:src="@drawable/ic_tabler_corner_down_left_24"
                 android:contentDescription="@string/a11y_enter" />
             <ImageButton
                 android:id="@+id/btnSpace"
                 style="@style/ToolbarIconButton"
-                android:src="@drawable/ic_material_space_bar_24"
+                android:src="@drawable/ic_tabler_space_24"
                 android:contentDescription="@string/a11y_space" />
             <ImageButton
                 android:id="@+id/btnSwitchKeyboard"
                 style="@style/ToolbarIconButton"
-                android:src="@drawable/ic_material_keyboard_24"
+                android:src="@drawable/ic_tabler_keyboard_24"
                 android:contentDescription="@string/a11y_switch_keyboard" />
         </LinearLayout>
     </LinearLayout>
@@ -261,6 +261,12 @@
                         <TextView android:id="@+id/keyNumberPlus" style="@style/NumericKey" android:text="@string/numeric_key_plus" android:contentDescription="@string/a11y_numeric_key_plus" />
                     </LinearLayout>
                 </LinearLayout>
+
+                <com.inktalk.ime.ui.FullKeyboardView
+                    android:id="@+id/fullKeyboardPanel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone" />
             </FrameLayout>
 
             <TextView

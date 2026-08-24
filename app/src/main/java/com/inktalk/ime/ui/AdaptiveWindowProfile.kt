@@ -25,7 +25,7 @@ data class AdaptiveWindowProfile(
     val isWide: Boolean get() = widthClass != WidthClass.COMPACT
     val isExpanded: Boolean get() = widthClass == WidthClass.EXPANDED
 
-    /** 语音、手写和数字输入主区域不在大屏上无限拉伸。 */
+    /** 语音、手写和辅助键盘主区域不在大屏上无限拉伸。 */
     val imePrimaryContentMaxWidthDp: Int = when (widthClass) {
         WidthClass.COMPACT -> widthDp
         WidthClass.MEDIUM, WidthClass.EXPANDED -> IME_PRIMARY_MAX_WIDTH_DP

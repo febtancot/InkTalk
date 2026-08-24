@@ -89,6 +89,9 @@ class SettingsActivity : Activity() {
                 _, enabled ->
             Prefs.putBool(this, Prefs.KEY_EXTREME_HEIGHT_MODE, enabled)
         }
+        findViewById<Switch>(R.id.switchFullKeyboard).setOnCheckedChangeListener { _, enabled ->
+            Prefs.putBool(this, Prefs.KEY_ENABLE_FULL_KEYBOARD, enabled)
+        }
 
         findViewById<View>(R.id.btnSave).setSystemHapticClick {
             savePrefs()
@@ -213,6 +216,8 @@ class SettingsActivity : Activity() {
             Prefs.getBool(this, Prefs.KEY_ENABLE_ITN, true)
         findViewById<Switch>(R.id.switchExtremeHeight).isChecked =
             Prefs.getBool(this, Prefs.KEY_EXTREME_HEIGHT_MODE, false)
+        findViewById<Switch>(R.id.switchFullKeyboard).isChecked =
+            Prefs.getBool(this, Prefs.KEY_ENABLE_FULL_KEYBOARD, false)
         findViewById<EditText>(R.id.editAiBaseUrl).setText(
             Prefs.get(this, Prefs.KEY_AI_BASE_URL, Prefs.DEFAULT_AI_BASE_URL)
         )
@@ -237,6 +242,11 @@ class SettingsActivity : Activity() {
             this,
             Prefs.KEY_EXTREME_HEIGHT_MODE,
             findViewById<Switch>(R.id.switchExtremeHeight).isChecked,
+        )
+        Prefs.putBool(
+            this,
+            Prefs.KEY_ENABLE_FULL_KEYBOARD,
+            findViewById<Switch>(R.id.switchFullKeyboard).isChecked,
         )
         val idx = findViewById<Spinner>(R.id.spinnerResource).selectedItemPosition
         Prefs.put(this, Prefs.KEY_RESOURCE_ID, Prefs.RESOURCE_IDS[idx.coerceIn(0, 3)])

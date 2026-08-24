@@ -30,6 +30,7 @@ object Prefs {
     const val KEY_ENGLISH_RECOGNITION_STRATEGY = "english_recognition_strategy"
     const val KEY_WIDE_IME_CONTENT_ON_RIGHT = "wide_ime_content_on_right"
     const val KEY_EXTREME_HEIGHT_MODE = "extreme_height_mode"
+    const val KEY_ENABLE_FULL_KEYBOARD = "enable_full_keyboard"
 
     const val KEY_AI_BASE_URL = "ai_base_url"
     const val KEY_AI_API_KEY = "ai_api_key"
@@ -171,6 +172,7 @@ object Prefs {
         settings.put(KEY_ENABLE_PUNC, getBool(context, KEY_ENABLE_PUNC, true))
         settings.put(KEY_ENABLE_ITN, getBool(context, KEY_ENABLE_ITN, true))
         settings.put(KEY_EXTREME_HEIGHT_MODE, getBool(context, KEY_EXTREME_HEIGHT_MODE, false))
+        settings.put(KEY_ENABLE_FULL_KEYBOARD, getBool(context, KEY_ENABLE_FULL_KEYBOARD, false))
         settings.put(
             KEY_INPUT_MODE,
             get(context, KEY_INPUT_MODE, SpeechInputMode.CHINESE.preferenceValue),
@@ -278,6 +280,7 @@ object Prefs {
         KEY_ENABLE_PUNC,
         KEY_ENABLE_ITN,
         KEY_EXTREME_HEIGHT_MODE,
+        KEY_ENABLE_FULL_KEYBOARD,
         KEY_AI_NO_THINKING,
         KEY_AI_REPLACE_ORIGINAL,
     )

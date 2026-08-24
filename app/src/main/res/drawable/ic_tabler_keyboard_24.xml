@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tabler Icons: keyboard, MIT License, https://github.com/tabler/tabler-icons -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M2,8A2,2 0,0 1,4 6L20,6A2,2 0,0 1,22 8L22,16A2,2 0,0 1,20 18L4,18A2,2 0,0 1,2 16L2,8M6,10L6,10.01M10,10L10,10.01M14,10L14,10.01M18,10L18,10.01M6,14L6,14.01M18,14L18,14.01M10,14L14,14.01"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2" />
+</vector>

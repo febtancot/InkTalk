@@ -389,6 +389,7 @@ class InputHistoryActivity : Activity() {
         InputSource.VOICE -> R.string.history_source_voice
         InputSource.HANDWRITING -> R.string.history_source_handwriting
         InputSource.NUMERIC_KEYPAD -> R.string.history_source_numeric_keypad
+        InputSource.FULL_KEYBOARD -> R.string.history_source_full_keyboard
         InputSource.INSTRUCTION -> R.string.history_source_instruction
         InputSource.AI_ACTION -> R.string.history_source_ai
     })

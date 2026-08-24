@@ -12,6 +12,7 @@ enum class InputSource(val wireValue: String) {
     VOICE("voice"),
     HANDWRITING("handwriting"),
     NUMERIC_KEYPAD("numeric-keypad"),
+    FULL_KEYBOARD("full-keyboard"),
     INSTRUCTION("instruction"),
     AI_ACTION("ai-action");
 

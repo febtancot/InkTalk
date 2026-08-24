@@ -42,8 +42,13 @@ import com.inktalk.ime.history.InputHistoryStore
 import com.inktalk.ime.history.InputSource
 import com.inktalk.ime.history.CorrectionCandidateDetector
 import com.inktalk.ime.history.HotwordSelection
+import com.inktalk.ime.keyboard.FullKeyboardAction
+import com.inktalk.ime.keyboard.FullKeyboardLanguage
+import com.inktalk.ime.keyboard.FullKeyboardPage
+import com.inktalk.ime.keyboard.PinyinLexicon
 import com.inktalk.ime.settings.Prefs
 import com.inktalk.ime.settings.SettingsActivity
+import com.inktalk.ime.ui.FullKeyboardView
 import com.inktalk.ime.ui.HandwritingPadView
 import com.inktalk.ime.ui.AdaptiveWindowProfile
 import com.inktalk.ime.ui.InputPanelSizing
@@ -77,6 +82,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private lateinit var previewContainer: View
     private lateinit var handwritingPanel: View
     private lateinit var numericKeypadPanel: View
+    private lateinit var fullKeyboardPanel: FullKeyboardView
     private lateinit var handwritingPad: HandwritingPadView
     private lateinit var handwritingHint: TextView
     private lateinit var handwritingCandidateScroll: HorizontalScrollView
@@ -104,11 +110,21 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private var sessionText = StringBuilder()
     private var voiceHistoryBuffer = StringBuilder()
     private var numericHistoryBuffer = StringBuilder()
+    private var fullKeyboardHistoryBuffer = StringBuilder()
     private var interim = ""
     private var aiBusy = false
     private var shortcutPageVisible = false
     private var handwritingEnabled = false
     private var numericKeypadEnabled = false
+    private var fullKeyboardEnabled = false
+    private var fullKeyboardPreferred = false
+    private var fullKeyboardLanguage = FullKeyboardLanguage.CHINESE
+    private var fullKeyboardPage = FullKeyboardPage.LETTERS
+    private var fullKeyboardUppercase = false
+    private var pinyinComposition = ""
+    @Volatile private var pinyinLexicon: PinyinLexicon? = null
+    @Volatile private var pinyinLexiconLoadStarted = false
+    @Volatile private var pinyinLexiconLoadFailed = false
     private var handwritingReadyLanguages = emptySet<HandwritingLanguage>()
     private var handwritingComposingText = ""
     private var handwritingOperationId = 0L
@@ -189,6 +205,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         previewContainer = view.findViewById(R.id.previewContainer)
         handwritingPanel = view.findViewById(R.id.handwritingPanel)
         numericKeypadPanel = view.findViewById(R.id.numericKeypadPanel)
+        fullKeyboardPanel = view.findViewById(R.id.fullKeyboardPanel)
         handwritingPad = view.findViewById(R.id.handwritingPad)
         handwritingHint = view.findViewById(R.id.textHandwritingHint)
         handwritingCandidateScroll = view.findViewById(R.id.handwritingCandidateScroll)
@@ -226,13 +243,21 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         bindKeyboardSwitcher(view.findViewById(R.id.btnSwitchKeyboard))
         view.findViewById<View>(R.id.btnEnter).setSystemHapticClick {
             if (handwritingEnabled) finishHandwritingComposition()
-            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            if (fullKeyboardEnabled) {
+                handleFullKeyboardEnter()
+            } else {
+                sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            }
         }
         view.findViewById<View>(R.id.btnSpace).setSystemHapticClick {
             if (handwritingEnabled) finishHandwritingComposition()
-            currentInputConnection?.let { connection ->
-                connection.finishComposingText()
-                if (connection.commitText(" ", 1)) sessionText.append(' ')
+            if (fullKeyboardEnabled) {
+                handleFullKeyboardSpace()
+            } else {
+                currentInputConnection?.let { connection ->
+                    connection.finishComposingText()
+                    if (connection.commitText(" ", 1)) sessionText.append(' ')
+                }
             }
         }
         btnSettings.setSystemHapticClick { openSettings() }
@@ -250,7 +275,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             toggleHandwritingMode()
         }
         btnNumericKeypadMode.setSystemHapticClick(HapticFeedbackConstants.CONTEXT_CLICK) {
-            toggleNumericKeypadMode()
+            toggleAuxiliaryKeyboardMode()
         }
         btnInstructionCancel.setSystemHapticClick { cancelInstructionMode() }
         btnInstructionRetry.setSystemHapticClick { retryInstruction() }
@@ -263,6 +288,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
         bindShortcutKeys(view)
         bindNumericKeys(view)
+        bindFullKeyboard()
 
         view.findViewById<TextView>(R.id.btnSummarize).setSystemHapticClick {
             runAi(AiProcessor.Mode.SUMMARIZE)
@@ -273,6 +299,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         view.findViewById<TextView>(R.id.btnPolish).setSystemHapticClick {
             runAi(AiProcessor.Mode.POLISH)
         }
+        reloadFullKeyboardPreference()
         updateInputModeVisual()
         applyPanelPresentationForCurrentMode()
         return view
@@ -284,6 +311,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         super.onWindowShown()
         if (::inputRoot.isInitialized) {
             reloadExtremeHeightPreference()
+            reloadFullKeyboardPreference()
             applyPanelPresentationForCurrentMode()
         }
     }
@@ -298,6 +326,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         reloadExtremeHeightPreference()
+        reloadFullKeyboardPreference()
         // 每次弹出面板时重置会话状态
         editorSessionId += 1
         resetEditEvidence()
@@ -316,6 +345,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         pendingInstructionActivation = false
         resetHandwritingMode(commitComposition = false)
         resetNumericKeypadMode()
+        resetFullKeyboardMode(commitComposition = false)
         shortcutPageVisible = false
         pageVoice.animate().cancel()
         pageKeys.animate().cancel()
@@ -343,6 +373,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         flushDeleteEvidence()
         flushVoiceHistory()
         flushNumericHistory()
+        flushFullKeyboardHistory()
         cancelPendingHandwritingRecognition()
         handwritingRecognizer.close()
         cancelInstructionMode(refresh = false)
@@ -355,8 +386,10 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         flushDeleteEvidence()
         resetHandwritingMode(commitComposition = true)
         resetNumericKeypadMode()
+        resetFullKeyboardMode(commitComposition = true)
         flushVoiceHistory()
         flushNumericHistory()
+        flushFullKeyboardHistory()
         editorSessionId += 1
         session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
             discardAsrUntilIdle = true
@@ -389,6 +422,9 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         }
         if (!shortcutPageVisible && numericKeypadEnabled) {
             resetNumericKeypadMode()
+        }
+        if (!shortcutPageVisible && fullKeyboardEnabled) {
+            resetFullKeyboardMode(commitComposition = true)
         }
         shortcutPageVisible = !shortcutPageVisible
         applyPanelPresentationForCurrentMode()
@@ -444,6 +480,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             btnCmd.background = getDrawable(R.drawable.bg_icon_button)
         }
         if (numericKeypadEnabled) resetNumericKeypadMode()
+        if (fullKeyboardEnabled) resetFullKeyboardMode(commitComposition = true)
         if (instructionState !is InstructionState.Off) cancelInstructionMode(refresh = false)
         session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
             discardAsrUntilIdle = true
@@ -501,6 +538,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             btnCmd.background = getDrawable(R.drawable.bg_icon_button)
         }
         if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
+        if (fullKeyboardEnabled) resetFullKeyboardMode(commitComposition = true)
         if (instructionState !is InstructionState.Off) cancelInstructionMode(refresh = false)
         session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
             discardAsrUntilIdle = true
@@ -575,6 +613,269 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         val text = numericHistoryBuffer.toString()
         numericHistoryBuffer = StringBuilder()
         recordInput(InputSource.NUMERIC_KEYPAD, text)
+    }
+
+    // ---------- 全键盘输入 ----------
+
+    private fun toggleAuxiliaryKeyboardMode() {
+        reloadFullKeyboardPreference()
+        if (fullKeyboardPreferred) toggleFullKeyboardMode() else toggleNumericKeypadMode()
+    }
+
+    private fun toggleFullKeyboardMode() {
+        if (fullKeyboardEnabled) {
+            resetFullKeyboardMode(commitComposition = true)
+            refreshIdleHint()
+            return
+        }
+        if (shortcutPageVisible) {
+            shortcutPageVisible = false
+            animateShortcutPage(showShortcuts = false)
+            btnCmd.background = getDrawable(R.drawable.bg_icon_button)
+        }
+        if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
+        if (numericKeypadEnabled) resetNumericKeypadMode()
+        if (instructionState !is InstructionState.Off) cancelInstructionMode(refresh = false)
+        session?.takeIf { it.state != AsrSession.State.IDLE }?.let {
+            discardAsrUntilIdle = true
+            it.stop()
+        }
+        flushVoiceHistory()
+        fullKeyboardEnabled = true
+        fullKeyboardHistoryBuffer = StringBuilder()
+        fullKeyboardPage = FullKeyboardPage.LETTERS
+        fullKeyboardUppercase = false
+        pinyinComposition = ""
+        inputModeGroup.visibility = View.GONE
+        previewContainer.visibility = View.GONE
+        handwritingPanel.visibility = View.GONE
+        numericKeypadPanel.visibility = View.GONE
+        fullKeyboardPanel.visibility = View.VISIBLE
+        waveform.visibility = View.GONE
+        textStatus.text = getString(
+            if (pinyinLexiconLoadFailed) R.string.full_keyboard_dictionary_failed
+            else R.string.full_keyboard_hint
+        )
+        textStatus.setTextColor(getColor(R.color.text_hint))
+        ensurePinyinLexiconLoaded()
+        renderFullKeyboard()
+        renderPurposeModeVisual()
+        applyPanelPresentationForCurrentMode()
+    }
+
+    private fun resetFullKeyboardMode(commitComposition: Boolean) {
+        if (commitComposition) {
+            if (!commitCurrentPinyin()) cancelCurrentPinyin()
+        } else {
+            cancelCurrentPinyin()
+        }
+        flushFullKeyboardHistory()
+        fullKeyboardEnabled = false
+        fullKeyboardPage = FullKeyboardPage.LETTERS
+        fullKeyboardUppercase = false
+        if (::fullKeyboardPanel.isInitialized) {
+            fullKeyboardPanel.visibility = View.GONE
+            previewContainer.visibility = View.VISIBLE
+            inputModeGroup.visibility = View.VISIBLE
+            waveform.visibility = View.VISIBLE
+            renderPurposeModeVisual()
+        }
+        if (::inputRoot.isInitialized) applyPanelPresentationForCurrentMode()
+    }
+
+    private fun bindFullKeyboard() {
+        fullKeyboardPanel.onKey = { action ->
+            when (action) {
+                is FullKeyboardAction.Character -> handleFullKeyboardCharacter(action.value)
+                FullKeyboardAction.Shift -> {
+                    fullKeyboardUppercase = !fullKeyboardUppercase
+                    renderFullKeyboard()
+                }
+                FullKeyboardAction.Delete -> handleFullKeyboardDelete()
+                FullKeyboardAction.SwitchLanguage -> switchFullKeyboardLanguage()
+                FullKeyboardAction.SwitchPage -> {
+                    commitCurrentPinyin()
+                    fullKeyboardPage = if (fullKeyboardPage == FullKeyboardPage.LETTERS) {
+                        FullKeyboardPage.NUMBERS
+                    } else {
+                        FullKeyboardPage.LETTERS
+                    }
+                    renderFullKeyboard()
+                }
+                FullKeyboardAction.Space -> handleFullKeyboardSpace()
+                FullKeyboardAction.Enter -> handleFullKeyboardEnter()
+            }
+        }
+        fullKeyboardPanel.onCandidate = { candidate -> commitPinyinCandidate(candidate) }
+    }
+
+    private fun handleFullKeyboardCharacter(value: String) {
+        if (!fullKeyboardEnabled) return
+        val character = value.singleOrNull()?.lowercaseChar()
+        val isPinyinKey = fullKeyboardLanguage == FullKeyboardLanguage.CHINESE &&
+            fullKeyboardPage == FullKeyboardPage.LETTERS &&
+            (character != null && character in 'a'..'z' || value == "'")
+        if (isPinyinKey) {
+            if (value == "'" && (pinyinComposition.isEmpty() || pinyinComposition.endsWith("'"))) {
+                return
+            }
+            pinyinComposition += value.lowercase()
+            currentInputConnection?.setComposingText(pinyinComposition, 1)
+            renderFullKeyboard()
+            return
+        }
+        commitCurrentPinyin()
+        commitFullKeyboardText(value)
+        if (fullKeyboardLanguage == FullKeyboardLanguage.ENGLISH && fullKeyboardUppercase) {
+            fullKeyboardUppercase = false
+            renderFullKeyboard()
+        }
+    }
+
+    private fun handleFullKeyboardSpace() {
+        if (!fullKeyboardEnabled) return
+        if (pinyinComposition.isNotEmpty()) commitCurrentPinyin() else commitFullKeyboardText(" ")
+    }
+
+    private fun handleFullKeyboardEnter() {
+        if (!fullKeyboardEnabled) return
+        commitCurrentPinyin()
+        sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+    }
+
+    private fun handleFullKeyboardDelete() {
+        if (!fullKeyboardEnabled) return
+        if (pinyinComposition.isNotEmpty()) {
+            pinyinComposition = pinyinComposition.dropLast(1)
+            if (pinyinComposition.isEmpty()) {
+                currentInputConnection?.setComposingText("", 1)
+                currentInputConnection?.finishComposingText()
+            } else {
+                currentInputConnection?.setComposingText(pinyinComposition, 1)
+            }
+            renderFullKeyboard()
+        } else {
+            deleteOnce()
+        }
+    }
+
+    private fun switchFullKeyboardLanguage() {
+        commitCurrentPinyin()
+        fullKeyboardLanguage = if (fullKeyboardLanguage == FullKeyboardLanguage.CHINESE) {
+            FullKeyboardLanguage.ENGLISH
+        } else {
+            FullKeyboardLanguage.CHINESE
+        }
+        fullKeyboardUppercase = false
+        renderFullKeyboard()
+    }
+
+    private fun commitCurrentPinyin(): Boolean {
+        val raw = pinyinComposition
+        if (raw.isEmpty()) return false
+        val candidate = pinyinLexicon?.candidates(raw, 1)?.firstOrNull()
+        return commitPinyinCandidate(candidate ?: raw.replace("'", ""))
+    }
+
+    private fun commitPinyinCandidate(candidate: String): Boolean {
+        if (pinyinComposition.isEmpty()) return false
+        val committed = currentInputConnection?.commitText(candidate, 1) == true
+        if (committed) {
+            fullKeyboardHistoryBuffer.append(candidate)
+            sessionText.append(candidate)
+            recordCommittedEdit(InputSource.FULL_KEYBOARD, candidate)
+            pinyinComposition = ""
+        }
+        renderFullKeyboard()
+        return committed
+    }
+
+    private fun cancelCurrentPinyin() {
+        if (pinyinComposition.isEmpty()) return
+        currentInputConnection?.setComposingText("", 1)
+        currentInputConnection?.finishComposingText()
+        pinyinComposition = ""
+        if (::fullKeyboardPanel.isInitialized) renderFullKeyboard()
+    }
+
+    private fun commitFullKeyboardText(value: String): Boolean {
+        val committed = currentInputConnection?.let { connection ->
+            connection.finishComposingText()
+            connection.commitText(value, 1)
+        } == true
+        if (committed) {
+            fullKeyboardHistoryBuffer.append(value)
+            sessionText.append(value)
+            recordCommittedEdit(InputSource.FULL_KEYBOARD, value)
+        }
+        return committed
+    }
+
+    private fun flushFullKeyboardHistory() {
+        val text = fullKeyboardHistoryBuffer.toString()
+        fullKeyboardHistoryBuffer = StringBuilder()
+        recordInput(InputSource.FULL_KEYBOARD, text)
+    }
+
+    private fun renderFullKeyboard() {
+        if (!::fullKeyboardPanel.isInitialized) return
+        val candidates = if (
+            fullKeyboardLanguage == FullKeyboardLanguage.CHINESE &&
+            fullKeyboardPage == FullKeyboardPage.LETTERS
+        ) {
+            pinyinLexicon?.candidates(pinyinComposition).orEmpty()
+        } else {
+            emptyList()
+        }
+        fullKeyboardPanel.render(
+            language = fullKeyboardLanguage,
+            page = fullKeyboardPage,
+            uppercase = fullKeyboardUppercase,
+            composition = pinyinComposition,
+            candidates = candidates,
+        )
+    }
+
+    private fun ensurePinyinLexiconLoaded() {
+        if (pinyinLexicon != null || pinyinLexiconLoadStarted || pinyinLexiconLoadFailed) return
+        pinyinLexiconLoadStarted = true
+        textStatus.text = getString(R.string.full_keyboard_loading_dictionary)
+        Thread({
+            val result = runCatching {
+                resources.openRawResource(R.raw.pinyin_dictionary).use(PinyinLexicon::from)
+            }
+            handwritingHandler.post {
+                pinyinLexiconLoadStarted = false
+                result.onSuccess { pinyinLexicon = it }
+                    .onFailure {
+                        pinyinLexiconLoadFailed = true
+                        Log.e("InkTalkKeyboard", "Failed to load pinyin dictionary", it)
+                    }
+                if (fullKeyboardEnabled) {
+                    textStatus.text = getString(
+                        if (result.isSuccess) R.string.full_keyboard_hint
+                        else R.string.full_keyboard_dictionary_failed
+                    )
+                    renderFullKeyboard()
+                }
+            }
+        }, "InkTalkPinyinLexicon").start()
+    }
+
+    private fun reloadFullKeyboardPreference() {
+        val preferred = Prefs.getBool(this, Prefs.KEY_ENABLE_FULL_KEYBOARD, false)
+        if (fullKeyboardPreferred != preferred) {
+            if (numericKeypadEnabled) resetNumericKeypadMode()
+            if (fullKeyboardEnabled) resetFullKeyboardMode(commitComposition = true)
+            fullKeyboardPreferred = preferred
+            if (::textStatus.isInitialized) refreshIdleHint()
+        }
+        if (!::btnNumericKeypadMode.isInitialized) return
+        btnNumericKeypadMode.setImageResource(
+            if (fullKeyboardPreferred) R.drawable.ic_material_keyboard_24
+            else R.drawable.ic_material_dialpad_24
+        )
+        renderPurposeModeVisual()
     }
 
     private fun prepareHandwritingModels() {
@@ -866,7 +1167,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         val configurationHeight = resources.configuration.screenHeightDp
             .takeIf { it > 0 }
             ?.let { (it * resources.displayMetrics.density).toInt() }
-        val expandedInput = handwritingEnabled || numericKeypadEnabled
+        val expandedInput = handwritingEnabled || numericKeypadEnabled || fullKeyboardEnabled
         val height = InputPanelSizing.heightPx(
             screenHeightPx = configurationHeight ?: resources.displayMetrics.heightPixels,
             density = resources.displayMetrics.density,
@@ -894,7 +1195,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     private fun applyPanelPresentationForCurrentMode() {
         if (!::inputRoot.isInitialized || !::btnSettings.isInitialized) return
-        val expandedInput = handwritingEnabled || numericKeypadEnabled
+        val expandedInput = handwritingEnabled || numericKeypadEnabled || fullKeyboardEnabled
         val extremeVoicePresentation = extremeHeightMode &&
             !expandedInput && !shortcutPageVisible
 
@@ -1092,7 +1393,8 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
         val profile = AdaptiveWindowProfile.fromPixels(availableWidth, availableHeight, density)
 
         val extremeVoicePresentation = extremeHeightMode &&
-            !handwritingEnabled && !numericKeypadEnabled && !shortcutPageVisible
+            !handwritingEnabled && !numericKeypadEnabled && !fullKeyboardEnabled &&
+            !shortcutPageVisible
         val useExtremeWideSingleHandLayout =
             InputPanelSizing.usesExtremeWideSingleHandLayout(
                 isWideWindow = profile.isWide,
@@ -1446,6 +1748,10 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     }
 
     private fun deleteOnce() {
+        if (fullKeyboardEnabled && pinyinComposition.isNotEmpty()) {
+            handleFullKeyboardDelete()
+            return
+        }
         if (handwritingEnabled &&
             (handwritingPad.hasInk() || handwritingComposingText.isNotEmpty())
         ) {
@@ -1490,6 +1796,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private fun toggleSession() {
         if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
         if (numericKeypadEnabled) resetNumericKeypadMode()
+        if (fullKeyboardEnabled) resetFullKeyboardMode(commitComposition = true)
         if (instructionState is InstructionState.Processing ||
             instructionState is InstructionState.Reviewing
         ) return
@@ -1666,6 +1973,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private fun toggleInstructionMode() {
         if (handwritingEnabled) resetHandwritingMode(commitComposition = true)
         if (numericKeypadEnabled) resetNumericKeypadMode()
+        if (fullKeyboardEnabled) resetFullKeyboardMode(commitComposition = true)
         if (instructionState !is InstructionState.Off) {
             cancelInstructionMode()
             return
@@ -1973,15 +2281,16 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
     private fun renderPurposeModeVisual() {
         if (!::btnInstruction.isInitialized) return
         val instructionActive = instructionState !is InstructionState.Off
-        val specialModeActive = instructionActive || handwritingEnabled || numericKeypadEnabled
+        val auxiliaryKeyboardEnabled = numericKeypadEnabled || fullKeyboardEnabled
+        val specialModeActive = instructionActive || handwritingEnabled || auxiliaryKeyboardEnabled
         btnInstruction.isSelected = instructionActive
         btnHandwritingMode.isSelected = handwritingEnabled
-        btnNumericKeypadMode.isSelected = numericKeypadEnabled
+        btnNumericKeypadMode.isSelected = auxiliaryKeyboardEnabled
         voicePurposeThumb.animate().cancel()
         voicePurposeThumb.visibility = if (specialModeActive) View.VISIBLE else View.INVISIBLE
         if (specialModeActive) {
             val selectedIndex = when {
-                numericKeypadEnabled -> 2
+                auxiliaryKeyboardEnabled -> 2
                 handwritingEnabled -> 1
                 else -> 0
             }
@@ -1996,10 +2305,12 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
             if (handwritingEnabled) R.string.a11y_disable_handwriting
             else R.string.a11y_enable_handwriting
         )
-        btnNumericKeypadMode.contentDescription = getString(
-            if (numericKeypadEnabled) R.string.a11y_disable_numeric_keypad
-            else R.string.a11y_enable_numeric_keypad
-        )
+        btnNumericKeypadMode.contentDescription = getString(when {
+            fullKeyboardPreferred && fullKeyboardEnabled -> R.string.a11y_disable_full_keyboard
+            fullKeyboardPreferred -> R.string.a11y_enable_full_keyboard
+            numericKeypadEnabled -> R.string.a11y_disable_numeric_keypad
+            else -> R.string.a11y_enable_numeric_keypad
+        })
     }
 
     private fun instructionScopeText(document: InstructionDocumentSnapshot): String =
@@ -2145,7 +2456,7 @@ class InkTalkIME : InputMethodService(), AsrSession.Listener {
 
     override fun onStateChanged(state: AsrSession.State) {
         setAsrKeepScreenOn(state != AsrSession.State.IDLE)
-        if (handwritingEnabled || numericKeypadEnabled) {
+        if (handwritingEnabled || numericKeypadEnabled || fullKeyboardEnabled) {
             if (state == AsrSession.State.IDLE) {
                 updateMicVisual(false)
                 discardAsrUntilIdle = false

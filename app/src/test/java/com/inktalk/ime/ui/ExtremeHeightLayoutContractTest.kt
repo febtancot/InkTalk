@@ -47,6 +47,23 @@ class ExtremeHeightLayoutContractTest {
         )
     }
 
+    @Test
+    fun settingsExposeFullKeyboardSwitchAndImeContainsReplacementPanel() {
+        val switch = document("activity_settings.xml").elementById("switchFullKeyboard")
+        val ime = document("ime_voice_panel.xml")
+
+        assertEquals(
+            "@string/settings_full_keyboard_title",
+            switch.getAttributeNS(ANDROID_NAMESPACE, "contentDescription"),
+        )
+        assertEquals(
+            "gone",
+            ime.elementById("fullKeyboardPanel")
+                .getAttributeNS(ANDROID_NAMESPACE, "visibility"),
+        )
+        ime.elementById("btnNumericKeypadMode")
+    }
+
     private fun document(fileName: String): Document =
         DocumentBuilderFactory.newInstance().apply {
             isNamespaceAware = true
